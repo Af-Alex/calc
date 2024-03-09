@@ -20,20 +20,31 @@ public class OpenAPIConfig {
         devServer.setUrl("http://localhost:" + serverPort);
         devServer.setDescription("Server URL in Development environment");
 
+        Server prodServer = new Server();
+        prodServer.setUrl("http://gitlab-cicd.freemyip.com:" + serverPort);
+        prodServer.setDescription("Server URL in Production environment");
+
+
+        Server prodServerTest = new Server();
+        prodServerTest.setUrl("https://gitlab-cicd.freemyip.com:" + serverPort);
+        prodServerTest.setDescription("Server URL in ProductionTest environment");
+
+        return new OpenAPI().info(getInfo()).servers(List.of(devServer, prodServer, prodServerTest));
+    }
+
+    private Info getInfo() {
         Contact contact = new Contact();
         contact.setEmail("dev.af.alex@gmail.com");
         contact.setName("AlexAf");
 
         License mitLicense = new License().name("MIT License").url("https://choosealicense.com/licenses/mit/");
 
-        Info info = new Info()
+        return new Info()
                 .title("Money calc API")
-                .version("1")
+                .version("1.0.1")
                 .contact(contact)
                 .description("Калькулятор для расчётов процентов от ЗП на разные нужны")
                 .license(mitLicense);
-
-        return new OpenAPI().info(info).servers(List.of(devServer));
     }
 
 }
