@@ -2,29 +2,40 @@ package com.alexaf.salarycalc.telegram;
 
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class KeyboardFactory {
-    public static ReplyKeyboard getPizzaToppingsKeyboard() {
-        KeyboardRow row = new KeyboardRow();
-        row.add("Margherita");
-        row.add("Pepperoni");
-        return new ReplyKeyboardMarkup(List.of(row));
+
+    public static final KeyboardRow TO_START_ROW = new KeyboardRow(List.of(new KeyboardButton("В начало")));
+
+    public static ReplyKeyboard getActions() {
+        List<KeyboardRow> rows = new ArrayList<>();
+
+        for (CountAction action : CountAction.values()) {
+            KeyboardRow row = new KeyboardRow();
+            row.add(new KeyboardButton(action.getCyrillic()));
+            rows.add(row);
+        }
+
+        return getDefaultReply(rows);
     }
 
-    public static ReplyKeyboard getPizzaOrDrinkKeyboard(){
-        KeyboardRow row = new KeyboardRow();
-        row.add("Pizza");
-        row.add("Drink");
-        return new ReplyKeyboardMarkup(List.of(row));
+    public static ReplyKeyboard getToStart() {
+        return getDefaultReply(Collections.emptyList());
     }
 
-    public static ReplyKeyboard getYesOrNo() {
-        KeyboardRow row = new KeyboardRow();
-        row.add("Yes");
-        row.add("No");
-        return new ReplyKeyboardMarkup(List.of(row));
+    private static ReplyKeyboard getDefaultReply(List<KeyboardRow> rows) {
+        rows.add(TO_START_ROW);
+        var reply = new ReplyKeyboardMarkup();
+        reply.setResizeKeyboard(true);
+        reply.setOneTimeKeyboard(true);
+        reply.setKeyboard(rows);
+        return reply;
     }
+
 }

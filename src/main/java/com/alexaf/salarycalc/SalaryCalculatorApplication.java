@@ -15,7 +15,7 @@ public class SalaryCalculatorApplication {
         ConfigurableApplicationContext ctx = SpringApplication.run(SalaryCalculatorApplication.class, args);
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(ctx.getBean("pizzaBot", AbilityBot.class));
+            botsApi.registerBot(ctx.getBean("salaryBot", AbilityBot.class));
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }

@@ -1,7 +1,6 @@
 package com.alexaf.salarycalc.telegram;
 
-import com.alexaf.salarycalc.telegram.Constants;
-import com.alexaf.salarycalc.telegram.ResponseHandler;
+import com.alexaf.salarycalc.service.Calculator;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.telegram.abilitybots.api.bot.AbilityBot;
@@ -18,13 +17,13 @@ import static org.telegram.abilitybots.api.objects.Privacy.PUBLIC;
 import static org.telegram.abilitybots.api.util.AbilityUtils.getChatId;
 
 @Component
-public class PizzaBot extends AbilityBot {
+public class SalaryBot extends AbilityBot {
 
     private final ResponseHandler responseHandler;
 
-    public PizzaBot(Environment environment) {
+    public SalaryBot(Environment environment, Calculator calculator) {
         super(environment.getProperty("telegram.api-key"), "alexaf_moneycalc_bot");
-        responseHandler = new ResponseHandler(silent, db);
+        responseHandler = new ResponseHandler(silent, db, calculator);
     }
 
     public Ability startBot() {

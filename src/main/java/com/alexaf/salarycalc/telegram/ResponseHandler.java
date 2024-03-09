@@ -1,5 +1,10 @@
 package com.alexaf.salarycalc.telegram;
 
+import com.alexaf.salarycalc.dto.View;
+import com.alexaf.salarycalc.service.Calculator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import org.telegram.abilitybots.api.db.DBContext;
 import org.telegram.abilitybots.api.sender.SilentSender;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -11,26 +16,32 @@ import java.util.Map;
 
 import static com.alexaf.salarycalc.telegram.Constants.CHAT_STATES;
 import static com.alexaf.salarycalc.telegram.Constants.START_TEXT;
-import static com.alexaf.salarycalc.telegram.UserState.AWAITING_CONFIRMATION;
-import static com.alexaf.salarycalc.telegram.UserState.AWAITING_NAME;
-import static com.alexaf.salarycalc.telegram.UserState.FOOD_DRINK_SELECTION;
-import static com.alexaf.salarycalc.telegram.UserState.PIZZA_TOPPINGS;
+import static com.alexaf.salarycalc.telegram.UserState.SELECT_ACTION;
 
 public class ResponseHandler {
     private final SilentSender sender;
     private final Map<Long, UserState> chatStates;
+    private final ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
+    private final Calculator calculator;
 
-    public ResponseHandler(SilentSender sender, DBContext db) {
+    public ResponseHandler(SilentSender sender, DBContext db, Calculator calculator) {
         this.sender = sender;
+        this.calculator = calculator;
         chatStates = db.getMap(CHAT_STATES);
     }
 
     public void replyToStart(long chatId) {
-        SendMessage message = new SendMessage();
-        message.setChatId(chatId);
-        message.setText(START_TEXT);
-        sender.execute(message);
-        chatStates.put(chatId, AWAITING_NAME);
+        promptWithKeyboardForState(chatId, START_TEXT, KeyboardFactory.getActions(), SELECT_ACTION);
+    }
+
+    public void replyToSelect(long chatId, Message message) {
+        if (message.getText().equalsIgnoreCase(CountAction.COUNT.getCyrillic())) {
+            replyToCountAction(chatId, message);
+        } else if (message.getText().equalsIgnoreCase("В начало")){
+            replyToStart(chatId);
+        } else {
+            promptWithKeyboardForState(chatId, "Такого действия нет, выбери из предложенных", KeyboardFactory.getActions(), SELECT_ACTION);
+        }
     }
 
     public void replyToButtons(long chatId, Message message) {
@@ -39,10 +50,9 @@ public class ResponseHandler {
         }
 
         switch (chatStates.get(chatId)) {
-            case AWAITING_NAME -> replyToName(chatId, message);
-            case FOOD_DRINK_SELECTION -> replyToFoodDrinkSelection(chatId, message);
-            case PIZZA_TOPPINGS -> replyToPizzaToppings(chatId, message);
-            case AWAITING_CONFIRMATION -> replyToOrder(chatId, message);
+            case SELECT_ACTION -> replyToSelect(chatId, message);
+            case COUNT_ACTION -> replyToCountAction(chatId, message);
+            case TYPE_SALARY_ACTION -> replyToSalaryAnswer(chatId, message);
             default -> unexpectedMessage(chatId);
         }
     }
@@ -57,77 +67,50 @@ public class ResponseHandler {
     private void stopChat(long chatId) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
-        sendMessage.setText("Thank you for your order. See you soon!\nPress /start to order again");
+        sendMessage.setText("Type /start to interact again");
         chatStates.remove(chatId);
         sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
         sender.execute(sendMessage);
     }
 
-    private void replyToOrder(long chatId, Message message) {
+    private void replyToCountAction(long chatId, Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
-        if ("yes".equalsIgnoreCase(message.getText())) {
-            sendMessage.setText("We will deliver it soon. Thank you!\nOrder another?");
-            sendMessage.setReplyMarkup(KeyboardFactory.getPizzaOrDrinkKeyboard());
-            sender.execute(sendMessage);
-            chatStates.put(chatId, FOOD_DRINK_SELECTION);
-        } else if ("no".equalsIgnoreCase(message.getText())) {
-            stopChat(chatId);
-        } else {
-            sendMessage.setText("Please select yes or no");
-            sendMessage.setReplyMarkup(KeyboardFactory.getYesOrNo());
-            sender.execute(sendMessage);
-        }
+        sendMessage.setText("Введи сумму для расчёта");
+        sendMessage.setReplyMarkup(new ReplyKeyboardRemove(true));
+        sender.execute(sendMessage);
+        chatStates.put(chatId, UserState.TYPE_SALARY_ACTION);
     }
 
-    private void replyToPizzaToppings(long chatId, Message message) {
-        if ("margherita".equalsIgnoreCase(message.getText())) {
-            promptWithKeyboardForState(chatId, "You selected Margherita Pizza.\nWe will deliver it soon. Thank you!\nOrder again?",
-                    KeyboardFactory.getYesOrNo(), AWAITING_CONFIRMATION);
-        } else if ("pepperoni".equalsIgnoreCase(message.getText())) {
-            promptWithKeyboardForState(chatId, "We finished the Pepperoni Pizza.\nSelect another Topping",
-                    KeyboardFactory.getPizzaToppingsKeyboard(), PIZZA_TOPPINGS);
-        } else {
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(chatId);
-            sendMessage.setText("We don't sell " + message.getText() + " Pizza.\nSelect the toppings!");
-            sendMessage.setReplyMarkup(KeyboardFactory.getPizzaToppingsKeyboard());
-            sender.execute(sendMessage);
-        }
-    }
-
-    private void promptWithKeyboardForState(long chatId, String text, ReplyKeyboard YesOrNo, UserState awaitingReorder) {
+    private void promptWithKeyboardForState(long chatId, String text, ReplyKeyboard buttons, UserState nextState) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
         sendMessage.setText(text);
-        sendMessage.setReplyMarkup(YesOrNo);
+        sendMessage.setReplyMarkup(buttons);
         sender.execute(sendMessage);
-        chatStates.put(chatId, awaitingReorder);
+        chatStates.put(chatId, nextState);
     }
 
-    private void replyToFoodDrinkSelection(long chatId, Message message) {
+    private void replyToSalaryAnswer(long chatId, Message message) {
         SendMessage sendMessage = new SendMessage();
         sendMessage.setChatId(chatId);
-        if ("drink".equalsIgnoreCase(message.getText())) {
-            sendMessage.setText("We don't sell drinks.\nBring your own drink!! :)");
-            sendMessage.setReplyMarkup(KeyboardFactory.getPizzaOrDrinkKeyboard());
-            sender.execute(sendMessage);
-        } else if ("pizza".equalsIgnoreCase(message.getText())) {
-            sendMessage.setText("We love Pizza in here.\nSelect the toppings!");
-            sendMessage.setReplyMarkup(KeyboardFactory.getPizzaToppingsKeyboard());
-            sender.execute(sendMessage);
-            chatStates.put(chatId, PIZZA_TOPPINGS);
-        } else {
-            sendMessage.setText("We don't sell " + message.getText() + ". Please select from the options below.");
-            sendMessage.setReplyMarkup(KeyboardFactory.getPizzaOrDrinkKeyboard());
+        try {
+            String salary = message.getText().replace(",", "");
+            View result = calculator.calculate(Double.parseDouble(salary));
+            sendMessage.setText("Вот как надо распределить средства:\n" + writer.writeValueAsString(result));
+            sendMessage.setReplyMarkup(KeyboardFactory.getActions());
+            chatStates.put(chatId, SELECT_ACTION);
+        } catch (NumberFormatException e) {
+            sendMessage.setText("Не удалось прочитать значение. Попробуй ещё раз");
+            sendMessage.setReplyMarkup(KeyboardFactory.getToStart());
+            chatStates.put(chatId, SELECT_ACTION);
+        } catch (JsonProcessingException e) {
+            sendMessage.setText("При попытке генерации ответа произошла ошибка. Попробуйте ещё раз");
+            sendMessage.setReplyMarkup(KeyboardFactory.getToStart());
+            chatStates.put(chatId, SELECT_ACTION);
+        } finally {
             sender.execute(sendMessage);
         }
-    }
-
-    private void replyToName(long chatId, Message message) {
-        promptWithKeyboardForState(chatId, "Hello " + message.getText() + ". What would you like to have?",
-                KeyboardFactory.getPizzaOrDrinkKeyboard(),
-                FOOD_DRINK_SELECTION);
     }
 
     public boolean userIsActive(Long chatId) {

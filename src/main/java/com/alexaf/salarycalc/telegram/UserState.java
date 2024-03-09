@@ -1,5 +1,8 @@
 package com.alexaf.salarycalc.telegram;
 
 public enum UserState {
-    AWAITING_NAME, FOOD_DRINK_SELECTION, PIZZA_TOPPINGS, AWAITING_CONFIRMATION
+    SELECT_ACTION,
+    COUNT_ACTION,
+    TYPE_SALARY_ACTION
+
 }
