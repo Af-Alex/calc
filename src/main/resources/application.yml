@@ -1,14 +1,19 @@
 # spring config
 spring:
   profiles:
-    active: dev
     default: dev
 
 # server config
 server:
   port: 8585
+  servlet:
+    session:
+      cookie:
+        http-only: true
+    encoding:
+      charset: UTF-8
 
-# app config (tax in %)
+  # app config (tax in %)
 calc:
   service:
     month-salary: 180000
@@ -22,13 +27,8 @@ calc:
 logging:
   level:
     org.springframework: info
-    com.alexaf.moneycalc: debug
     root: info
   charset:
     console: UTF-8
-
-telegram:
-  api-key: {set me on server}
-
 
 

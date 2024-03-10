@@ -22,7 +22,7 @@ public class SalaryBot extends AbilityBot {
     private final ResponseHandler responseHandler;
 
     public SalaryBot(Environment environment, Calculator calculator) {
-        super(environment.getProperty("telegram.api-key"), "alexaf_moneycalc_bot");
+        super(environment.getProperty("telegram.api-key"), environment.getProperty("telegram.bot-name"));
         responseHandler = new ResponseHandler(silent, db, calculator);
     }
 

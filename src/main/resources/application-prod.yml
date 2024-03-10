@@ -1,0 +1,14 @@
+spring:
+  devtools:
+    add-properties: false
+
+telegram:
+  api-key: {set me on server}
+  bot-name: alexaf_moneycalc_bot
+server:
+  ssl:
+    key-store: {set me on server}
+    key-store-password: {set me on server}
+    keyStoreType: PKCS12
+    keyAlias: tomcat
+    enabled: true

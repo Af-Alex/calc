@@ -8,28 +8,19 @@ import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.util.List;
 
 @Configuration
 public class OpenAPIConfig {
 
+    @Value("${server.port:8080}")
+    public String serverPort;
+
     @Bean
-    public OpenAPI myOpenAPI(@Value("${server.port:8080}") String serverPort) {
-        Server devServer = new Server();
-        devServer.setUrl("http://localhost:" + serverPort);
-        devServer.setDescription("Server URL in Development environment");
-
-        Server prodServer = new Server();
-        prodServer.setUrl("http://gitlab-cicd.freemyip.com:" + serverPort);
-        prodServer.setDescription("Server URL in Production environment");
-
-
-        Server prodServerTest = new Server();
-        prodServerTest.setUrl("https://gitlab-cicd.freemyip.com:" + serverPort);
-        prodServerTest.setDescription("Server URL in ProductionTest environment");
-
-        return new OpenAPI().info(getInfo()).servers(List.of(devServer, prodServer, prodServerTest));
+    public OpenAPI myOpenAPI(List<Server> servers) {
+        return new OpenAPI().info(getInfo()).servers(servers);
     }
 
     private Info getInfo() {
@@ -45,6 +36,22 @@ public class OpenAPIConfig {
                 .contact(contact)
                 .description("Калькулятор для расчётов процентов от ЗП на разные нужны")
                 .license(mitLicense);
+    }
+
+    @Profile("prod")
+    @Bean
+    public Server prodServer() {
+        return new Server()
+                .url("https://gitlab-cicd.freemyip.com:" + serverPort)
+                .description("Server URL in Production environment");
+    }
+
+    @Profile("dev")
+    @Bean
+    public Server devServer() {
+        return new Server()
+                .url("http://localhost:" + serverPort)
+                .description("Server URL in Development environment");
     }
 
 }

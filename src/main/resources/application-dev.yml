@@ -1,0 +1,10 @@
+logging:
+  level:
+    root: debug
+
+telegram:
+  api-key: {set me on server}
+  bot-name: test_alexaf_moneycalc_bot
+
+
+
