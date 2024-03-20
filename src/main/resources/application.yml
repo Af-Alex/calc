@@ -2,6 +2,25 @@
 spring:
   profiles:
     default: dev
+  datasource:
+    url: jdbc:h2:file:./data/sampledb;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+    h2:
+      console:
+        path: /h2-console
+        enabled: true
+      database:
+        name: sampledb
+        schema: public
+  jpa:
+    database: h2
+    hibernate:
+      ddl-auto: create
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yml
+    enabled: false
 
 # server config
 server:
