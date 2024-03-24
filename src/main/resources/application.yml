@@ -1,38 +1,20 @@
-# spring config
+# Spring configuration
 spring:
   profiles:
     default: dev
-  datasource:
-    url: jdbc:h2:file:./data/sampledb;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: password
-    h2:
-      console:
-        path: /h2-console
-        enabled: true
-      database:
-        name: sampledb
-        schema: public
-  jpa:
-    database: h2
-    hibernate:
-      ddl-auto: create
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.yml
-    enabled: false
 
-# server config
+# Server configuration
 server:
   port: 8585
   servlet:
     session:
       cookie:
         http-only: true
-    encoding:
-      charset: UTF-8
+      encoding:
+        charset: UTF-8
+      timeout: 60m
 
-  # app config (tax in %)
+# Application configuration (tax in %)
 calc:
   service:
     month-salary: 180000
@@ -43,11 +25,12 @@ calc:
     julia-needs: 13000
     julia-loan: 8300
 
+# Logging configuration
 logging:
   level:
     org.springframework: info
     root: info
   charset:
     console: UTF-8
-
-
+springdoc:
+  show-login-endpoint: true
