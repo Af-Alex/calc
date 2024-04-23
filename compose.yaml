@@ -1,9 +1,0 @@
-version: '3'
-services:
-  salary-calc:
-    container_name: salary-calc
-    build:
-      dockerfile: Dockerfile
-    image: salary-calc:latest
-    ports:
-      - "8585:8585"

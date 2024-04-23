@@ -1,9 +1,12 @@
 package com.alexaf.salarycalc.config;
 
+import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
+import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -20,7 +23,11 @@ public class OpenAPIConfig {
 
     @Bean
     public OpenAPI myOpenAPI(List<Server> servers) {
-        return new OpenAPI().info(getInfo()).servers(servers);
+        return new OpenAPI()
+                .info(getInfo())
+                .servers(servers)
+                .addSecurityItem(getSecurityRequirement())
+                .components(getComponents());
     }
 
     private Info getInfo() {
@@ -52,6 +59,20 @@ public class OpenAPIConfig {
         return new Server()
                 .url("http://localhost:" + serverPort)
                 .description("Server URL in Development environment");
+    }
+
+    private SecurityRequirement getSecurityRequirement() {
+        return new SecurityRequirement().addList("basicAuth");
+    }
+
+    private Components getComponents() {
+        return new Components().addSecuritySchemes("basicAuth", getSecurityScheme());
+    }
+
+    private SecurityScheme getSecurityScheme() {
+        return new SecurityScheme()
+                .type(SecurityScheme.Type.HTTP)
+                .scheme("basic");
     }
 
 }

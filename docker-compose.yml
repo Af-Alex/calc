@@ -1,0 +1,33 @@
+services:
+#  calc:
+#    container_name: calc
+#    build:
+#      dockerfile: Dockerfile
+#    image: salary-calc:latest
+#    ports:
+#      - "8585:8585"
+  postgres:
+    image: 'postgres:alpine3.19'
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: 'postgresUser'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'calc'
+    shm_size: 300mb
+    ports:
+      - '5432:5432'
+    networks:
+      - calc
+    volumes:
+      - calc:/var/lib/postgresql/data
+
+networks:
+  calc:
+    name: calc
+    driver: bridge
+
+volumes:
+  calc:
+    name: calc
+    driver: local

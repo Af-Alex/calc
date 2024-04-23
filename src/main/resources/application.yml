@@ -1,19 +1,29 @@
-# spring config
+# Spring configuration
 spring:
   profiles:
     default: dev
 
-# server config
+  mvc:
+    format:
+      date: dd.MM.yyyy
+      date-time: yyyy.MM.dd HH:mm:ss
+      time: HH:mm:ss
+  data:
+    rest:
+      default-media-type: application/json
+
+# Server configuration
 server:
   port: 8585
   servlet:
     session:
       cookie:
         http-only: true
-    encoding:
-      charset: UTF-8
+      encoding:
+        charset: UTF-8
+      timeout: 60m
 
-  # app config (tax in %)
+# Application configuration (tax in %)
 calc:
   service:
     month-salary: 180000
@@ -24,11 +34,12 @@ calc:
     julia-needs: 13000
     julia-loan: 8300
 
+# Logging configuration
 logging:
   level:
     org.springframework: info
     root: info
   charset:
     console: UTF-8
-
-
+springdoc:
+  show-login-endpoint: true
