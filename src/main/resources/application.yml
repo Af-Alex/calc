@@ -3,6 +3,15 @@ spring:
   profiles:
     default: dev
 
+  mvc:
+    format:
+      date: dd.MM.yyyy
+      date-time: yyyy.MM.dd HH:mm:ss
+      time: HH:mm:ss
+  data:
+    rest:
+      default-media-type: application/json
+
 # Server configuration
 server:
   port: 8585

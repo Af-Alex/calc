@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+import static java.lang.String.format;
+
 @Service
 @RequiredArgsConstructor
 public class AppUserService implements UserDetailsService {
@@ -42,6 +44,7 @@ public class AppUserService implements UserDetailsService {
 
     public AppUser getUser(UUID userId) {
         return appUserRepository.findById(userId).map(appUserMapper::toDto)
-                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+                .orElseThrow(() -> new EntityNotFoundException(format("User [%s] not found", userId)));
     }
+
 }

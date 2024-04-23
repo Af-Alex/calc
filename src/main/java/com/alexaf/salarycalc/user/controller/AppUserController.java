@@ -27,7 +27,6 @@ public class AppUserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID userId) {
         appUserService.deleteUser(userId);
     }

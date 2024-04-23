@@ -13,7 +13,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 @SpringBootApplication
 @EnableJpaRepositories(
         basePackages = {
-                "com.alexaf.salarycalc.user.repository"
+                "com.alexaf.salarycalc.*.repository"
         })
 @EnableTransactionManagement
 public class SalaryCalculatorApplication {

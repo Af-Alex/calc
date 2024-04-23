@@ -23,7 +23,7 @@ public class AppUserEntity extends BaseEntity {
     @Column(name = "username", length = 100, nullable = false, unique = true)
     private String username;
 
-    @Column(name = "password", length = 72)
+    @Column(name = "password", length = 72, nullable = false)
     private String password;
 
     @Enumerated(STRING)
