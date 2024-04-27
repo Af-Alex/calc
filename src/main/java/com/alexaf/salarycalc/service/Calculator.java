@@ -6,8 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import static com.alexaf.salarycalc.utils.Utils.percentOf;
-import static com.alexaf.salarycalc.utils.Utils.round;
+import static com.alexaf.salarycalc.utils.CalcUtils.percentOf;
+import static com.alexaf.salarycalc.utils.CalcUtils.round;
 
 @Slf4j
 @Service

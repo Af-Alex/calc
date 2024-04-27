@@ -1,7 +1,7 @@
 package com.alexaf.salarycalc.user.controller;
 
-import com.alexaf.salarycalc.user.dto.AppUser;
-import com.alexaf.salarycalc.user.dto.UserRole;
+import com.alexaf.salarycalc.user.dto.Role;
+import com.alexaf.salarycalc.user.dto.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,20 +10,21 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Schema(name = "User", description = "Response for getting user data")
-public record AppUserResponse(
+@Schema(description = "Данные пользователя")
+public record UserResponse(
         @NotNull
         UUID id,
         @NotBlank
         String username,
         @NotNull
-        UserRole role,
+        Role role,
         @NotNull
         Boolean enabled,
         @NotNull
         LocalDateTime created
+
 ) implements Serializable {
-    public AppUserResponse(AppUser appUser) {
-        this(appUser.getId(), appUser.getUsername(), appUser.getRole(), appUser.isEnabled(), appUser.getCreated());
+    public UserResponse(User user) {
+        this(user.getId(), user.getUsername(), user.getRole(), user.isEnabled(), user.getCreated());
     }
 }

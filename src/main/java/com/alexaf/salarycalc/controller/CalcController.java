@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value = "/calc")
+@RequestMapping(value = "api/v1/calc")
 @Tag(name = "Калькулятор", description = "Калькулятор для расчета зарплаты")
 public class CalcController {
 

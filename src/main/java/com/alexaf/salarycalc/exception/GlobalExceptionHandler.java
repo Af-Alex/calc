@@ -20,25 +20,23 @@ import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-        logError(ex);
-        return new ResponseEntity<>(new ErrorResponse(ex.getLocalizedMessage()), UNPROCESSABLE_ENTITY);
+    protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        return new ResponseEntity<>(processError(e, e.getLocalizedMessage()), UNPROCESSABLE_ENTITY);
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException e) {
-        logError(e);
-        return new ResponseEntity<>(new ErrorResponse("Access denied"), FORBIDDEN);
+        return new ResponseEntity<>(processError(e, "Access denied"), FORBIDDEN);
     }
 
     @ExceptionHandler(Throwable.class)
     public ResponseEntity<ErrorResponse> handleThrowable(Throwable e) {
-        logError(e);
-        return new ResponseEntity<>(new ErrorResponse(), INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(processError(e, e.getLocalizedMessage()), INTERNAL_SERVER_ERROR);
     }
 
-    private static void logError(Throwable e) {
+    private static ErrorResponse processError(Throwable e, String message) {
         log.error(e.getMessage(), e);
+        return new ErrorResponse(message);
     }
 
 }

@@ -3,7 +3,7 @@ package com.alexaf.salarycalc.utils;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Utils {
+public class CalcUtils {
 
     /**
      * @return Процент, который составляет первый аргумент от второго
