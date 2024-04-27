@@ -1,32 +1,33 @@
 package com.alexaf.salarycalc.user.dto;
 
-import com.alexaf.salarycalc.user.entity.AppUserEntity;
+import com.alexaf.salarycalc.user.entity.UserEntity;
+import lombok.Builder;
 import lombok.Data;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.UUID;
 
 /**
- * DTO for {@link AppUserEntity}
+ * DTO for {@link UserEntity}
  */
 @Data
-public class AppUser implements UserDetails {
+@Builder
+public class User implements UserDetails {
 
     private UUID id;
     private String username;
     private String password;
-    private UserRole role;
+    private Role role;
     private boolean enabled;
     private LocalDateTime created;
 
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singleton(role);
+        return role.getAuthorities();
     }
 
     @Override

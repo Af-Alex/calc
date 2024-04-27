@@ -2,15 +2,28 @@
 spring:
   profiles:
     default: dev
-
-  mvc:
-    format:
-      date: dd.MM.yyyy
-      date-time: yyyy.MM.dd HH:mm:ss
-      time: HH:mm:ss
-  data:
-    rest:
-      default-media-type: application/json
+  application:
+    name: calc
+    version: 1.0
+  # Database configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/calc
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+  jpa:
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: true
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+  # Liquibase configuration
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yml
+    enabled: true
+    default-schema: public
 
 # Server configuration
 server:
@@ -19,8 +32,6 @@ server:
     session:
       cookie:
         http-only: true
-      encoding:
-        charset: UTF-8
       timeout: 60m
 
 # Application configuration (tax in %)
@@ -34,6 +45,11 @@ calc:
     julia-needs: 13000
     julia-loan: 8300
 
+token:
+  signing:
+    key: ${JWT_SECRET_KEY_BASE64}
+    expiration: 3600000
+
 # Logging configuration
 logging:
   level:
@@ -41,5 +57,6 @@ logging:
     root: info
   charset:
     console: UTF-8
-springdoc:
-  show-login-endpoint: true
+
+telegram:
+  api-key: ${TG_API_KEY}
