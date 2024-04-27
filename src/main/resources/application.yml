@@ -60,3 +60,5 @@ logging:
 
 telegram:
   api-key: ${TG_API_KEY}
+#  Id главного пользователя telegram, которому доступно управление ботом
+  creator-id: 371923388

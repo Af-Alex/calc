@@ -1,6 +1,7 @@
 package com.alexaf.salarycalc.telegram;
 
 import com.alexaf.salarycalc.service.Calculator;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.telegram.abilitybots.api.bot.AbilityBot;
@@ -18,6 +19,9 @@ import static org.telegram.abilitybots.api.util.AbilityUtils.getChatId;
 
 @Component
 public class SalaryBot extends AbilityBot {
+
+    @Value("${telegram.creator-id:371923388}")
+    private Long creatorId;
 
     private final ResponseHandler responseHandler;
 
@@ -44,6 +48,7 @@ public class SalaryBot extends AbilityBot {
 
     @Override
     public long creatorId() {
-        return 1L;
+        return creatorId;
     }
+
 }
