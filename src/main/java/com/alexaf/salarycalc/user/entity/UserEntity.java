@@ -39,4 +39,7 @@ public class UserEntity extends BaseEntity {
     @Column(name = "enabled", nullable = false)
     private boolean enabled;
 
+    @Column(name = "telegram_id", unique = true)
+    private Long telegramId;
+
 }

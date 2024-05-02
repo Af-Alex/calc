@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.3</version>
+        <version>3.2.5</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.alexaf</groupId>
@@ -14,10 +14,14 @@
     <name>calc</name>
     <description>Salary calculator</description>
     <properties>
-        <java.version>22</java.version>
+        <spring.application.name>${project.artifactId}</spring.application.name>
+        <java.version>17</java.version>
         <maven.test.skip>true</maven.test.skip>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <io.jsonwebtoken.version>0.12.5</io.jsonwebtoken.version>
+        <telegrambots.version>7.2.1</telegrambots.version>
     </properties>
     <developers>
         <developer>
@@ -36,24 +40,12 @@
         </profile>
         <profile>
             <id>dev</id>
-            <activation>
-                <property>
-                    <name>spring.profiles.active</name>
-                    <value>dev</value>
-                </property>
-            </activation>
             <properties>
                 <spring.profiles.active>dev</spring.profiles.active>
             </properties>
         </profile>
         <profile>
             <id>prod</id>
-            <activation>
-                <property>
-                    <name>spring.profiles.active</name>
-                    <value>prod</value>
-                </property>
-            </activation>
             <properties>
                 <spring.profiles.active>prod</spring.profiles.active>
             </properties>
@@ -96,6 +88,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -152,14 +148,30 @@
         <!-- Telegram -->
         <dependency>
             <groupId>org.telegram</groupId>
-            <artifactId>telegrambots-spring-boot-starter</artifactId>
-            <version>6.9.7.1</version>
+            <artifactId>telegrambots-meta</artifactId>
+            <version>${telegrambots.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots-longpolling</artifactId>
+            <version>${telegrambots.version}</version>
         </dependency>
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-abilities</artifactId>
-            <version>6.9.7.1</version>
+            <version>${telegrambots.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots-client</artifactId>
+            <version>${telegrambots.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.telegram</groupId>
+            <artifactId>telegrambots-extensions</artifactId>
+            <version>7.2.1</version>
+        </dependency>
+
     </dependencies>
 
     <build>
@@ -167,6 +179,18 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-image</goal>
+                        </goals>
+                        <configuration>
+                            <image>
+                                <name>alexafanasyev/${project.artifactId}:${project.version}</name>
+                            </image>
+                        </configuration>
+                    </execution>
+                </executions>
                 <configuration>
                     <excludes>
                         <exclude>
@@ -176,13 +200,14 @@
                     </excludes>
                 </configuration>
             </plugin>
+
+            <!-- Компилятор -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -201,39 +226,41 @@
                         </path>
                     </annotationProcessorPaths>
                     <showWarnings>true</showWarnings>
-                    <enablePreview>true</enablePreview>
                     <verbose>false</verbose>
                     <compilerArgs>
-                        <compilerArg>--enable-preview</compilerArg>
                         <arg>-Amapstruct.suppressGeneratorVersionInfoComment=true</arg>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.liquibase</groupId>
-                <artifactId>liquibase-maven-plugin</artifactId>
-                <version>${liquibase.version}</version>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.liquibase.ext</groupId>
-                        <artifactId>liquibase-hibernate5</artifactId>
-                        <version>${liquibase.version}</version>
-                        <scope>runtime</scope>
-                    </dependency>
-                </dependencies>
-                <configuration>
-                    <driver>org.postgresql.Driver</driver>
-                    <url>jdbc:postgresql://localhost:5432/calc</url>
-                    <username>${env.POSTGRES_USER}}</username>
-                    <password>${env.POSTGRES_PASSWORD}</password>
-                    <outputChangeLogFile>src/main/resources/liquibase-outputChangeLog.sql</outputChangeLogFile>
-                    <schemas>public</schemas>
-                    <defaultSchemaName>public</defaultSchemaName>
-                </configuration>
-            </plugin>
+
+            <!-- Миграция БД -->
+<!--            <plugin>-->
+<!--                <groupId>org.liquibase</groupId>-->
+<!--                <artifactId>liquibase-maven-plugin</artifactId>-->
+<!--                <version>${liquibase.version}</version>-->
+<!--                <dependencies>-->
+<!--                    <dependency>-->
+<!--                        <groupId>org.liquibase.ext</groupId>-->
+<!--                        <artifactId>liquibase-hibernate5</artifactId>-->
+<!--                        <version>${liquibase.version}</version>-->
+<!--                        <scope>runtime</scope>-->
+<!--                    </dependency>-->
+<!--                </dependencies>-->
+<!--                <configuration>-->
+<!--                    <driver>org.postgresql.Driver</driver>-->
+<!--                    <url>jdbc:postgresql://localhost:5432/calc</url>-->
+<!--                    <username>${env.POSTGRES_USER}}</username>-->
+<!--                    <password>${env.POSTGRES_PASSWORD}</password>-->
+<!--                    <outputChangeLogFile>src/main/resources/liquibase-outputChangeLog.sql</outputChangeLogFile>-->
+<!--                    <schemas>public</schemas>-->
+<!--                    <defaultSchemaName>public</defaultSchemaName>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+
         </plugins>
     </build>
+
     <repositories>
         <repository>
             <id>spring-milestones</id>
@@ -242,6 +269,11 @@
             <snapshots>
                 <enabled>false</enabled>
             </snapshots>
+        </repository>
+        <repository>
+            <id>central</id>
+            <name>Maven Central</name>
+            <url>https://repo.maven.apache.org/maven2</url>
         </repository>
     </repositories>
 

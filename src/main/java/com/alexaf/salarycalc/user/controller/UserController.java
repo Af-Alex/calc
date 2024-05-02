@@ -28,7 +28,7 @@ public class UserController {
 
     @GetMapping("/unique-filter")
     public UserResponse getByUniqueFilter(@ParameterObject @ModelAttribute @Valid UniqueFilter filter) {
-        return new UserResponse(userService.findByUniqueFilter(filter));
+        return new UserResponse(userService.findByFilter(filter));
     }
 
     @PreAuthorize("hasAuthority('admin:delete')")

@@ -31,7 +31,7 @@ public class KeyboardFactory {
 
     private static ReplyKeyboard getDefaultReply(List<KeyboardRow> rows) {
         rows.add(TO_START_ROW);
-        var reply = new ReplyKeyboardMarkup();
+        var reply = new ReplyKeyboardMarkup(rows);
         reply.setResizeKeyboard(true);
         reply.setOneTimeKeyboard(true);
         reply.setKeyboard(rows);

@@ -1,33 +1,38 @@
 services:
-#  calc:
-#    container_name: calc
-#    build:
-#      dockerfile: Dockerfile
-#    image: salary-calc:latest
-#    ports:
-#      - "8585:8585"
-  postgres:
+  app:
+    container_name: calc_app
+    restart: no
+    image: alexafanasyev/calc:1.0.1
+    env_file:
+      - secrets/calc.env
+      - secrets/database.env
+    ports:
+      - "8585:8585"
+    networks:
+      - calc
+    depends_on:
+      - db
+  db:
     image: 'postgres:alpine3.19'
-    container_name: postgres
+    container_name: calc_db
     restart: unless-stopped
+    env_file:
+      - secrets/database.env
     environment:
-      POSTGRES_USER: 'postgresUser'
-      POSTGRES_PASSWORD: 'password'
-      POSTGRES_DB: 'calc'
-    shm_size: 300mb
+      PG_DATA: /var/lib/postgresql/data
+    shm_size: 500mb
     ports:
       - '5432:5432'
     networks:
       - calc
     volumes:
-      - calc:/var/lib/postgresql/data
+      - pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  pgdata:
 
 networks:
   calc:
     name: calc
     driver: bridge
-
-volumes:
-  calc:
-    name: calc
-    driver: local

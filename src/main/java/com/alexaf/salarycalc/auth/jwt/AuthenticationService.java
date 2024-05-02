@@ -29,7 +29,7 @@ public class AuthenticationService {
      * @return токен
      */
     public JwtAuthenticationResponse signUp(SignUpRequest request) {
-        userService.create(request.getUsername(), request.getPassword(), USER);
+        userService.create(request.getUsername(), request.getPassword(), USER, null);
         String jwt = jwtService.generateToken(userDetailsService.loadUserByUsername(request.getUsername()));
         return new JwtAuthenticationResponse(jwt);
     }

@@ -1,29 +1,32 @@
 # Spring configuration
 spring:
+  main:
+    banner-mode: off
   profiles:
     default: dev
-  application:
-    name: calc
-    version: 1.0
   # Database configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/calc
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
+    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
+    username: ${PG_USER:postgresUser}
+    password: ${PG_PASSWORD:password}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 1
   jpa:
     properties:
       hibernate:
-        default_schema: public
+        default_schema: calc
         format_sql: true
     open-in-view: false
     show-sql: false
     hibernate:
-      ddl-auto: none
+      ddl-auto: validate
   # Liquibase configuration
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yml
     enabled: true
-    default-schema: public
+    default-schema: calc
 
 # Server configuration
 server:
@@ -47,7 +50,7 @@ calc:
 
 token:
   signing:
-    key: ${JWT_SECRET_KEY_BASE64}
+    key: ${JWT_SECRET_BASE64}
     expiration: 3600000
 
 # Logging configuration
@@ -59,6 +62,6 @@ logging:
     console: UTF-8
 
 telegram:
-  api-key: ${TG_API_KEY}
+  bot-token: ${TG_BOT_TOKEN}
 #  Id главного пользователя telegram, которому доступно управление ботом
   creator-id: 371923388
