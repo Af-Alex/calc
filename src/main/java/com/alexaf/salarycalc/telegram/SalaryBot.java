@@ -1,73 +1,92 @@
 package com.alexaf.salarycalc.telegram;
 
-import com.alexaf.salarycalc.service.Calculator;
+import com.alexaf.salarycalc.telegram.copies.Ability;
+import com.alexaf.salarycalc.telegram.copies.MessageContext;
+import com.alexaf.salarycalc.telegram.copies.Reply;
+import com.alexaf.salarycalc.telegram.copies.ReplyCollection;
+import com.alexaf.salarycalc.telegram.service.TelegramResponseHandler;
+import com.alexaf.salarycalc.telegram.service.TelegramService;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import jakarta.transaction.Transactional;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.telegram.telegrambots.abilitybots.api.bot.AbilityBot;
-import org.telegram.telegrambots.abilitybots.api.bot.BaseAbilityBot;
-import org.telegram.telegrambots.abilitybots.api.db.DBContext;
-import org.telegram.telegrambots.abilitybots.api.objects.Ability;
 import org.telegram.telegrambots.abilitybots.api.objects.Flag;
 import org.telegram.telegrambots.abilitybots.api.objects.Locality;
-import org.telegram.telegrambots.abilitybots.api.objects.MessageContext;
-import org.telegram.telegrambots.abilitybots.api.objects.Privacy;
-import org.telegram.telegrambots.abilitybots.api.objects.Reply;
-import org.telegram.telegrambots.abilitybots.api.objects.Stats;
 import org.telegram.telegrambots.abilitybots.api.sender.SilentSender;
-import org.telegram.telegrambots.abilitybots.api.util.AbilityUtils;
+import org.telegram.telegrambots.abilitybots.api.util.AbilityExtension;
 import org.telegram.telegrambots.abilitybots.api.util.Pair;
 import org.telegram.telegrambots.abilitybots.api.util.Trio;
+import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
-import org.telegram.telegrambots.meta.generics.TelegramClient;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.alexaf.salarycalc.utils.AbilityUtils.checkReturnType;
+import static com.alexaf.salarycalc.utils.AbilityUtils.getUser;
+import static com.alexaf.salarycalc.utils.AbilityUtils.returnAbility;
+import static com.alexaf.salarycalc.utils.AbilityUtils.returnExtension;
+import static com.alexaf.salarycalc.utils.AbilityUtils.returnReply;
+import static com.alexaf.salarycalc.utils.AbilityUtils.returnReplyCollection;
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
-import static java.util.Comparator.comparingInt;
+import static java.util.Arrays.stream;
 import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.compile;
-import static org.telegram.telegrambots.abilitybots.api.objects.MessageContext.newContext;
 import static org.telegram.telegrambots.abilitybots.api.objects.Privacy.PUBLIC;
-import static org.telegram.telegrambots.abilitybots.api.util.AbilityMessageCodes.CHECK_INPUT_FAIL;
-import static org.telegram.telegrambots.abilitybots.api.util.AbilityMessageCodes.CHECK_LOCALITY_FAIL;
-import static org.telegram.telegrambots.abilitybots.api.util.AbilityMessageCodes.CHECK_PRIVACY_FAIL;
 import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.EMPTY_USER;
 import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getChatId;
-import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getLocalizedMessage;
-import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getUser;
-import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.isUserMessage;
 
 
 @Slf4j
 @Component
-public class SalaryBot extends AbilityBot {
+public class SalaryBot implements AbilityExtension, LongPollingSingleThreadUpdateConsumer {
 
-    @Value("${telegram.creator-id:371923388}")
-    private Long creatorId;
-    private final TelegramResponseHandler telegramResponseHandler;
+    private final TelegramResponseHandler responseHandler;
+    private final Long creatorId;
+    private final TelegramService telegramService;
 
+    // Ability registry
+    private final List<AbilityExtension> extensions = new ArrayList<>();
+    @Getter
+    private final String botUsername;
+    @Getter
+    private Map<String, Ability> abilities;
+
+    // Reply registry
+    @Getter
+    private List<Reply> replies;
+
+    @Autowired
     public SalaryBot(
-            TelegramClient telegramClient,
-            @Value("${telegram.bot-name}") String botUsername,
-            DBContext dbContext,
-            Calculator calculator,
-            SilentSender silent) {
-        super(telegramClient, botUsername, dbContext);
-        this.silent = silent;
-        this.telegramResponseHandler = new TelegramResponseHandler(silent, dbContext, calculator);
+            SilentSender silent,
+            TelegramService telegramService,
+            TelegramResponseHandler responseHandler,
+            @Value("${telegram.creator-id:371923388}") Long creatorId,
+            @Value("${telegram.bot-name}") String botName
+    ) {
+        this.creatorId = creatorId;
+        this.responseHandler = responseHandler;
+        this.telegramService = telegramService;
+        this.botUsername = botName;
         this.onRegister();
-        log.debug("Salary bot created");
+        silent.send("Bot started", creatorId);
     }
 
     public Ability startBot() {
@@ -77,88 +96,128 @@ public class SalaryBot extends AbilityBot {
                 .info(Constants.START_DESCRIPTION)
                 .locality(Locality.USER)
                 .privacy(PUBLIC)
-                .action(ctx -> telegramResponseHandler.replyToStart(ctx.chatId()))
+                .action(ctx -> responseHandler.replyToStart(ctx.chatId()))
                 .build();
     }
 
-    public Reply replyToButtons() {
-        BiConsumer<BaseAbilityBot, Update> action = (abilityBot, upd) -> telegramResponseHandler.replyToButtons(getChatId(upd), upd.getMessage());
-        return Reply.of(action, Flag.TEXT, upd -> telegramResponseHandler.userIsActive(getChatId(upd)));
+    public void onRegister() {
+        registerAbilities();
     }
 
-    @Override
+    public Reply replyToButtons() {
+        BiConsumer<SalaryBot, Update> action = (abilityBot, upd) -> responseHandler.replyToButtons(getChatId(upd), upd.getMessage());
+        return Reply.of(action, Flag.TEXT, upd -> responseHandler.userIsActive(getChatId(upd)));
+    }
+
+
     public long creatorId() {
         return creatorId;
     }
 
     @Override
+    @Transactional
     public void consume(Update update) {
         log.debug("Salary bot consumes update: {}", update);
         long millisStarted = System.currentTimeMillis();
 
         Stream.of(update)
-                .filter(super::checkGlobalFlags)
-                .filter(this::checkBlacklist)
+                .filter(this::checkGlobalFlags)
+                .filter(this::checkUserIsActive)
                 .map(this::addUser)
                 .filter(this::filterReply)
                 .filter(this::hasUser)
                 .map(this::getAbility)
                 .filter(this::validateAbility)
-                .filter(this::checkPrivacy)
-                .filter(this::checkLocality)
                 .filter(this::checkInput)
                 .filter(this::checkMessageFlags)
                 .map(this::getContext)
                 .map(this::consumeUpdate)
-                .map(this::updateStats)
                 .forEach(this::postConsumption);
 
-        // Commit to DB now after all the actions have been dealt
-        db.commit();
-
         long processingTime = System.currentTimeMillis() - millisStarted;
-        log.info(format("[%s] Processing of update [%s] ended at %s%n---> Processing time: [%d ms] <---%n", getBotUsername(), update.getUpdateId(), now(), processingTime));
+        log.info(format("Processing of update [%s] ended at %s%n---> Processing time: [%d ms] <---%n", update.getUpdateId(), now(), processingTime));
+    }
+
+    private boolean checkGlobalFlags(Update update) {
+        return true;
     }
 
     Update addUser(Update update) {
-        User endUser = AbilityUtils.getUser(update);
+        User endUser = getUser(update);
         if (endUser.equals(EMPTY_USER)) {
             // Can't add an empty user, return the update as is
             return update;
         }
 
-        users().compute(endUser.getId(), (id, user) -> {
-            if (user == null) {
-                updateUserId(user, endUser);
-                return endUser;
-            }
-
-            if (!user.equals(endUser)) {
-                updateUserId(user, endUser);
-                return endUser;
-            }
-
-            return user;
-        });
+        if (telegramService.existsById(endUser.getId()))
+            log.debug("User {} already registered", endUser.getUserName());
+        else {
+            telegramService.registerUser(endUser);
+        }
 
         return update;
     }
 
+    private void registerAbilities() {
+        try {
+            // Collect all classes that implement AbilityExtension declared in the bot
+            extensions.addAll(stream(getClass().getMethods())
+                    .filter(checkReturnType(AbilityExtension.class))
+                    .map(returnExtension(this))
+                    .collect(Collectors.toList()));
+
+            // Add the bot itself as it is an AbilityExtension
+            extensions.add(this);
+
+            // Extract all abilities from every single extension instance
+            abilities = extensions.stream()
+                    .flatMap(ext -> Arrays.stream(ext.getClass().getMethods())
+                            .filter(checkReturnType(Ability.class))
+                            .map(returnAbility(ext))
+                    )
+                    // Abilities are immutable, build it respectively
+                    .collect(ImmutableMap::<String, Ability>builder,
+                            (b, a) -> b.put(a.name(), a),
+                            (b1, b2) -> b1.putAll(b2.build()))
+                    .build();
+
+            // Extract all replies from every single extension instance
+            Stream<Reply> extensionReplies = extensions.stream()
+                    .flatMap(ext -> stream(ext.getClass().getMethods())
+                            .filter(checkReturnType(Reply.class))
+                            .map(returnReply(ext)))
+                    .flatMap(Reply::stream);
+
+            // Extract all replies from extension instances methods, returning ReplyCollection
+            Stream<Reply> extensionCollectionReplies = extensions.stream()
+                    .flatMap(extension -> stream(extension.getClass().getMethods())
+                            .filter(checkReturnType(ReplyCollection.class))
+                            .map(returnReplyCollection(extension))
+                            .flatMap(ReplyCollection::stream));
+
+            // Replies can be standalone or attached to abilities, fetch those too
+            Stream<Reply> abilityReplies = abilities.values().stream()
+                    .flatMap(ability -> ability.replies().stream())
+                    .flatMap(Reply::stream);
+
+            // Now create the replies registry (list)
+            replies = Stream.of(abilityReplies, extensionReplies, extensionCollectionReplies)
+                    .flatMap(replyStream -> replyStream)
+                    .collect(
+                            ImmutableList::<Reply>builder,
+                            ImmutableList.Builder::add,
+                            (b1, b2) -> b1.addAll(b2.build()))
+                    .build();
+        } catch (IllegalStateException e) {
+            log.error("Duplicate names found while registering abilities. Make sure that the abilities declared don't clash with the reserved ones.", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+
     private void postConsumption(Pair<MessageContext, Ability> pair) {
         ofNullable(pair.b().postAction())
                 .ifPresent(consumer -> consumer.accept(pair.a()));
-    }
-
-    private void updateUserId(User oldUser, User newUser) {
-        if (oldUser != null && oldUser.getUserName() != null) {
-            // Remove old username -> ID
-            userIds().remove(oldUser.getUserName());
-        }
-
-        if (newUser.getUserName() != null) {
-            // Add new mapping with the new username
-            userIds().put(newUser.getUserName().toLowerCase(), newUser.getId());
-        }
     }
 
     boolean filterReply(Update update) {
@@ -166,7 +225,6 @@ public class SalaryBot extends AbilityBot {
                 .filter(reply -> runSilently(() -> reply.isOkFor(update), reply.name()))
                 .map(reply -> runSilently(() -> {
                     reply.actOn(this, update);
-                    updateReplyStats(reply);
                     return false;
                 }, reply.name()))
                 .reduce(true, Boolean::logicalAnd);
@@ -175,7 +233,7 @@ public class SalaryBot extends AbilityBot {
     boolean runSilently(Callable<Boolean> callable, String name) {
         try {
             return callable.call();
-        } catch(Exception ex) {
+        } catch (Exception ex) {
             String msg = format("Reply [%s] failed to check for conditions. " +
                     "Make sure you're safeguarding against all possible updates.", name);
             if (log.isDebugEnabled()) {
@@ -187,59 +245,41 @@ public class SalaryBot extends AbilityBot {
         return false;
     }
 
-    Pair<MessageContext, Ability> updateStats(Pair<MessageContext, Ability> pair) {
-        Ability ab = pair.b();
-        if (ab.statsEnabled()) {
-            updateStats(pair.b().name());
-        }
-        return pair;
-    }
-
-    private void updateReplyStats(Reply reply) {
-        if (reply.statsEnabled()) {
-            updateStats(reply.name());
-        }
-    }
-
-    void updateStats(String name) {
-        Stats statsObj = getStats().get(name);
-        statsObj.hit();
-        getStats().put(name, statsObj);
-    }
-
     private boolean hasUser(Update update) {
         // Valid updates without users should return an empty user
         // Updates that are not recognized by the getUser method will throw an exception
-        return !AbilityUtils.getUser(update).equals(EMPTY_USER);
+        return getUser(update).equals(EMPTY_USER);
+    }
+
+    protected boolean allowContinuousText() {
+        return false;
+    }
+
+    protected String getCommandPrefix() {
+        return "/";
+    }
+
+    protected String getCommandRegexSplit() {
+        return " ";
     }
 
     Trio<Update, Ability, String[]> getAbility(Update update) {
         // Handle updates without messages
         // Passing through this function means that the global flags have passed
         Message msg = update.getMessage();
-        if (!update.hasMessage() || !msg.hasText())
-            return Trio.of(update, getAbilities().get(DEFAULT), new String[]{});
 
         Ability ability;
         String[] tokens;
-        if (allowContinuousText()) {
-            String abName = getAbilities().keySet().stream()
-                    .filter(name -> msg.getText().startsWith(format("%s%s", getCommandPrefix(), name)))
-                    .max(comparingInt(String::length))
-                    .orElse(DEFAULT);
-            tokens = msg.getText()
-                    .replaceFirst(getCommandPrefix() + abName, "")
-                    .split(getCommandRegexSplit());
-            ability = getAbilities().get(abName);
+
+        tokens = msg.getText().split(getCommandRegexSplit());
+        if (tokens[0].startsWith(getCommandPrefix())) {
+            String abilityToken = stripBotUsername(tokens[0].substring(1)).toLowerCase();
+            ability = getAbilities().get(abilityToken);
+            tokens = Arrays.copyOfRange(tokens, 1, tokens.length);
         } else {
-            tokens = msg.getText().split(getCommandRegexSplit());
-            if (tokens[0].startsWith(getCommandPrefix())) {
-                String abilityToken = stripBotUsername(tokens[0].substring(1)).toLowerCase();
-                ability = getAbilities().get(abilityToken);
-                tokens = Arrays.copyOfRange(tokens, 1, tokens.length);
-            } else {
-                ability = getAbilities().get(DEFAULT);
-            }
+            log.error("Сюда мы не должны были попасть... NEED DEFAULT Ability");
+            ability = getAbilities().get("DEFAULT");
+            tokens = new String[0];
         }
         return Trio.of(update, ability, tokens);
     }
@@ -254,50 +294,16 @@ public class SalaryBot extends AbilityBot {
         return trio.b() != null;
     }
 
-    boolean checkBlacklist(Update update) {
+    boolean checkUserIsActive(Update update) {
         User user = getUser(update);
         if (isNull(user)) {
             return true;
         }
 
         long id = user.getId();
-        return id == creatorId() || !blacklist().contains(id);
-    }
-
-    boolean checkPrivacy(Trio<Update, Ability, String[]> trio) {
-        Update update = trio.a();
-        User user = AbilityUtils.getUser(update);
-        Privacy privacy;
-        long id = user.getId();
-
-        privacy = getPrivacy(update, id);
-
-        boolean isOk = privacy.compareTo(trio.b().privacy()) >= 0;
-
-        if (!isOk)
-            silent.send(
-                    getLocalizedMessage(
-                            CHECK_PRIVACY_FAIL,
-                            AbilityUtils.getUser(trio.a()).getLanguageCode()),
-                    getChatId(trio.a()));
-        return isOk;
-    }
-
-    boolean checkLocality(Trio<Update, Ability, String[]> trio) {
-        Update update = trio.a();
-        Locality locality = isUserMessage(update) ? Locality.USER : Locality.GROUP;
-        Locality abilityLocality = trio.b().locality();
-
-        boolean isOk = abilityLocality == Locality.ALL || locality == abilityLocality;
-
-        if (!isOk)
-            silent.send(
-                    getLocalizedMessage(
-                            CHECK_LOCALITY_FAIL,
-                            AbilityUtils.getUser(trio.a()).getLanguageCode(),
-                            abilityLocality.toString().toLowerCase()),
-                    getChatId(trio.a()));
-        return isOk;
+        return id == creatorId() || telegramService.find(user).orElseGet(
+                () -> telegramService.registerUser(user)
+        ).getActive();
     }
 
     boolean checkInput(Trio<Update, Ability, String[]> trio) {
@@ -307,12 +313,7 @@ public class SalaryBot extends AbilityBot {
         boolean isOk = abilityTokens == 0 || (tokens.length > 0 && tokens.length == abilityTokens);
 
         if (!isOk)
-            silent.send(
-                    getLocalizedMessage(
-                            CHECK_INPUT_FAIL,
-                            AbilityUtils.getUser(trio.a()).getLanguageCode(),
-                            abilityTokens, abilityTokens == 1 ? "input" : "inputs"),
-                    getChatId(trio.a()));
+            log.error("Invalid number of tokens. Expected: {}, Actual: {}", abilityTokens, tokens.length);
         return isOk;
     }
 
@@ -328,9 +329,9 @@ public class SalaryBot extends AbilityBot {
 
     Pair<MessageContext, Ability> getContext(Trio<Update, Ability, String[]> trio) {
         Update update = trio.a();
-        User user = AbilityUtils.getUser(update);
+        User user = getUser(update);
 
-        return Pair.of(newContext(update, user, getChatId(update), this, trio.c()), trio.b());
+        return Pair.of(MessageContext.newContext(update, user, getChatId(update), this, trio.c()), trio.b());
     }
 
     Pair<MessageContext, Ability> consumeUpdate(Pair<MessageContext, Ability> pair) {

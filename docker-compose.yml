@@ -1,11 +1,14 @@
 services:
   app:
-    container_name: calc_app
-    restart: no
     image: alexafanasyev/calc:1.0.1
+    container_name: calc_bot
+    restart: no
+    shm_size: 500mb
     env_file:
       - secrets/calc.env
       - secrets/database.env
+    environment:
+      DB_CONTAINER_NAME: calc_db
     ports:
       - "8585:8585"
     networks:
@@ -16,11 +19,11 @@ services:
     image: 'postgres:alpine3.19'
     container_name: calc_db
     restart: unless-stopped
+    shm_size: 500mb
     env_file:
       - secrets/database.env
     environment:
       PG_DATA: /var/lib/postgresql/data
-    shm_size: 500mb
     ports:
       - '5432:5432'
     networks:

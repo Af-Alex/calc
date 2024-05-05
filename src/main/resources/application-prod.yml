@@ -1,14 +1,3 @@
 spring:
   devtools:
     add-properties: false
-
-telegram:
-  bot-name: alexaf_moneycalc_bot
-
-server:
-  ssl:
-    key-store: ${KEY_STORE}
-    key-store-password: ${KEY_STORE_PASSWORD}
-    keyStoreType: PKCS12
-    keyAlias: tomcat
-    enabled: true
