@@ -1,10 +1,5 @@
 logging:
   level:
     root: info
-    org.springframework.web: info
-    org.springframework.security: info
     com.alexaf.salarycalc: debug
-
-telegram:
-  bot-name: test_alexaf_moneycalc_bot
 

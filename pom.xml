@@ -53,11 +53,6 @@
     </profiles>
 
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
         <!-- База данных -->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -78,11 +73,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.3.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -111,27 +101,13 @@
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/com.google.guava/guava -->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>33.2.0-jre</version>
+        </dependency>
 
-        <!-- Безопасность -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-security</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-api</artifactId>
-            <version>${io.jsonwebtoken.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>${io.jsonwebtoken.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>${io.jsonwebtoken.version}</version>
-        </dependency>
 
         <!-- Тестирование -->
         <dependency>
@@ -169,7 +145,7 @@
         <dependency>
             <groupId>org.telegram</groupId>
             <artifactId>telegrambots-extensions</artifactId>
-            <version>7.2.1</version>
+            <version>${telegrambots.version}</version>
         </dependency>
 
     </dependencies>
@@ -185,6 +161,7 @@
                             <goal>build-image</goal>
                         </goals>
                         <configuration>
+                            <excludeDevtools>true</excludeDevtools>
                             <image>
                                 <name>alexafanasyev/${project.artifactId}:${project.version}</name>
                             </image>
@@ -196,6 +173,10 @@
                         <exclude>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
+                        </exclude>
+                        <exclude>
+                            <groupId>org.mapstruct</groupId>
+                            <artifactId>mapstruct-processor</artifactId>
                         </exclude>
                     </excludes>
                 </configuration>
@@ -230,33 +211,11 @@
                     <compilerArgs>
                         <arg>-Amapstruct.suppressGeneratorVersionInfoComment=true</arg>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
+                        <arg>-Amapstruct.unmappedSourcePolicy=error</arg>
+                        <arg>-Amapstruct.unmappedTargetPolicy=error</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
-
-            <!-- Миграция БД -->
-<!--            <plugin>-->
-<!--                <groupId>org.liquibase</groupId>-->
-<!--                <artifactId>liquibase-maven-plugin</artifactId>-->
-<!--                <version>${liquibase.version}</version>-->
-<!--                <dependencies>-->
-<!--                    <dependency>-->
-<!--                        <groupId>org.liquibase.ext</groupId>-->
-<!--                        <artifactId>liquibase-hibernate5</artifactId>-->
-<!--                        <version>${liquibase.version}</version>-->
-<!--                        <scope>runtime</scope>-->
-<!--                    </dependency>-->
-<!--                </dependencies>-->
-<!--                <configuration>-->
-<!--                    <driver>org.postgresql.Driver</driver>-->
-<!--                    <url>jdbc:postgresql://localhost:5432/calc</url>-->
-<!--                    <username>${env.POSTGRES_USER}}</username>-->
-<!--                    <password>${env.POSTGRES_PASSWORD}</password>-->
-<!--                    <outputChangeLogFile>src/main/resources/liquibase-outputChangeLog.sql</outputChangeLogFile>-->
-<!--                    <schemas>public</schemas>-->
-<!--                    <defaultSchemaName>public</defaultSchemaName>-->
-<!--                </configuration>-->
-<!--            </plugin>-->
 
         </plugins>
     </build>

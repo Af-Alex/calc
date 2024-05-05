@@ -2,7 +2,6 @@ package com.alexaf.salarycalc.utils.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.Getter;
@@ -11,16 +10,15 @@ import org.hibernate.proxy.HibernateProxy;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.UUID;
 
 @MappedSuperclass
 @Getter
-public class BaseEntity {
+public class BaseEntity<PK> {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue
     @Column(name = "id", nullable = false)
-    private UUID id;
+    private Long id;
 
     @CreationTimestamp
     @Column(name = "created", nullable = false, updatable = false)

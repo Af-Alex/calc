@@ -7,4 +7,4 @@ public record Defaults(
         double juliaNeeds,
         double juliaLoan,
         double apartment
-) { }
+) {}

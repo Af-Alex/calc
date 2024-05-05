@@ -6,9 +6,9 @@ spring:
     default: dev
   # Database configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/${POSTGRES_DB}
-    username: ${PG_USER:postgresUser}
-    password: ${PG_PASSWORD:password}
+    url: jdbc:postgresql://${DB_CONTAINER_NAME:localhost}:5432/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -16,7 +16,7 @@ spring:
   jpa:
     properties:
       hibernate:
-        default_schema: calc
+        default_schema: ${DEFAULT_SCHEMA}
         format_sql: true
     open-in-view: false
     show-sql: false
@@ -26,16 +26,7 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yml
     enabled: true
-    default-schema: calc
-
-# Server configuration
-server:
-  port: 8585
-  servlet:
-    session:
-      cookie:
-        http-only: true
-      timeout: 60m
+    default-schema: ${DEFAULT_SCHEMA}
 
 # Application configuration (tax in %)
 calc:
@@ -48,11 +39,6 @@ calc:
     julia-needs: 13000
     julia-loan: 8300
 
-token:
-  signing:
-    key: ${JWT_SECRET_BASE64}
-    expiration: 3600000
-
 # Logging configuration
 logging:
   level:
@@ -63,5 +49,7 @@ logging:
 
 telegram:
   bot-token: ${TG_BOT_TOKEN}
-#  Id главного пользователя telegram, которому доступно управление ботом
+  bot-name: ${TG_BOT_NAME}
+  #  Id главного пользователя telegram, которому доступно управление ботом
   creator-id: 371923388
+  cache: true
