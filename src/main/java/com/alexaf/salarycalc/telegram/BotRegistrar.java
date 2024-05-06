@@ -7,7 +7,7 @@ import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Configuration
-public class BotRegistrator {
+public class BotRegistrar {
 
     @EventListener
     public void handleApplicationStartedEvent(ApplicationStartedEvent event) {
