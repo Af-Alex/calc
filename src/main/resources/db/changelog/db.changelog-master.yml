@@ -1,3 +1,4 @@
 databaseChangeLog:
   - includeAll:
-      path: classpath:db/changelog/20**/**/**-changelog.sql
+      path: db/changelog/20**/
+      relativeToChangelogFile: false

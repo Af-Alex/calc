@@ -1,5 +1,6 @@
 package com.alexaf.salarycalc.telegram;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
@@ -7,6 +8,7 @@ import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Configuration
+@ConditionalOnBean(TelegramConfig.class)
 public class BotRegistrar {
 
     @EventListener

@@ -1,6 +1,7 @@
 package com.alexaf.salarycalc.telegram.service;
 
 import com.alexaf.salarycalc.telegram.ChatState;
+import com.alexaf.salarycalc.telegram.TelegramConfig;
 import com.alexaf.salarycalc.user.TgUserMapper;
 import com.alexaf.salarycalc.user.TgUserService;
 import com.alexaf.salarycalc.user.dto.TgUser;
@@ -8,6 +9,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.User;
 
@@ -16,6 +18,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @Transactional
+@ConditionalOnBean(TelegramConfig.class)
 public class TelegramService {
 
     private final TgUserService userService;
