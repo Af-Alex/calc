@@ -1,0 +1,59 @@
+# Spring configuration
+spring:
+  main:
+    banner-mode: off
+  # Database configuration
+  datasource:
+#    url: jdbc:postgresql://${DB_CONTAINER_NAME:localhost}:${POSTGRES_PORT}/${POSTGRES_DB}
+#    username: ${POSTGRES_USER}
+#    password: ${POSTGRES_PASSWORD}
+#    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 100
+      minimum-idle: 10
+      auto-commit: false
+  jpa:
+    properties:
+      hibernate:
+        default_schema: calc
+        format_sql: true
+        connection:
+          autocommit: false
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+  # Liquibase configuration
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yml
+    enabled: true
+    default-schema: calc
+
+# Application configuration (tax in %)
+#calc:
+#  service:
+#    month-salary: 180000
+#    kata-tax: 0.17
+#    airbag: 30000
+#    mandatory: 46000
+#    apartment: 29000
+#    julia-needs: 13000
+#    julia-loan: 8300
+
+# Logging configuration
+logging:
+  level:
+    org.springframework: info
+    org.hibernate.SQL: debug
+    root: debug
+  charset:
+    console: UTF-8
+
+
+telegram:
+  enabled: false
+#  bot-token: ${TG_BOT_TOKEN}
+#  bot-name: ${TG_BOT_NAME}
+#  #  Id главного пользователя telegram, которому доступно управление ботом
+#  creator-id: 371923388
+#  cache: true

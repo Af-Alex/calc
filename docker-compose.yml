@@ -1,4 +1,3 @@
-version: '3.5'
 services:
   app:
     image: alexafanasyev/calc:1.0.1
@@ -31,7 +30,7 @@ services:
       - calc
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/main/resources/db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   pgdata:

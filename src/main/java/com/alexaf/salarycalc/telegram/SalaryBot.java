@@ -13,6 +13,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.abilitybots.api.objects.Flag;
 import org.telegram.telegrambots.abilitybots.api.objects.Locality;
@@ -56,6 +57,7 @@ import static org.telegram.telegrambots.abilitybots.api.util.AbilityUtils.getCha
 
 @Slf4j
 @Component
+@ConditionalOnBean(TelegramConfig.class)
 public class SalaryBot implements AbilityExtension, LongPollingSingleThreadUpdateConsumer {
 
     private final TelegramResponseHandler responseHandler;

@@ -5,11 +5,13 @@ import com.alexaf.salarycalc.service.Calculator;
 import com.alexaf.salarycalc.telegram.ChatState;
 import com.alexaf.salarycalc.telegram.CountAction;
 import com.alexaf.salarycalc.telegram.KeyboardFactory;
+import com.alexaf.salarycalc.telegram.TelegramConfig;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.abilitybots.api.sender.SilentSender;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -25,6 +27,7 @@ import static com.alexaf.salarycalc.telegram.CountAction.GET_DEFAULTS;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnBean(TelegramConfig.class)
 public class TelegramResponseHandler {
 
     private final ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
