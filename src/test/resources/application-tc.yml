@@ -11,14 +11,12 @@ spring:
     hikari:
       maximum-pool-size: 100
       minimum-idle: 10
-      auto-commit: false
   jpa:
     properties:
       hibernate:
         default_schema: calc
         format_sql: true
         connection:
-          autocommit: false
     open-in-view: false
     show-sql: true
     hibernate:

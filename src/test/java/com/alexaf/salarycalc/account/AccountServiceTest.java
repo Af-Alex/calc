@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
                 AccountRepository.class,
                 TgUserRepository.class
         })
-class AccountServiceIntegrationTest extends AbstractIntegrationTest {
+class AccountServiceTest extends AbstractIntegrationTest {
 
     @Autowired
     AccountService accountService;
@@ -41,10 +41,10 @@ class AccountServiceIntegrationTest extends AbstractIntegrationTest {
     AccountRepository accountRepository;
     @Autowired
     UserDataSetService userDataSetService;
-
-    private TgUserEntity user;
     @Autowired
     private AccountDataSetService accountDataSetService;
+
+    private TgUserEntity user;
 
     @BeforeEach
     public void setUp() {
