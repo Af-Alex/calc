@@ -14,13 +14,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 @Getter
 @Setter
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "account_entity")
+@Table(name = "account")
 public class AccountEntity extends BaseEntity {
 
     @Column(name = "balance", precision = 10, scale = 2)
@@ -29,5 +30,13 @@ public class AccountEntity extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_account_on_user"))
     private TgUserEntity owner; // владелец счёта
+
+    public void updateBalance(BigDecimal value) {
+        setBalance(balance.add(value));
+    }
+
+    public void setBalance(BigDecimal balance) {
+        this.balance = balance.setScale(2, RoundingMode.HALF_UP);
+    }
 
 }
