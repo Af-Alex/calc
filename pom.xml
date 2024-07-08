@@ -21,7 +21,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <io.jsonwebtoken.version>0.12.5</io.jsonwebtoken.version>
-        <telegrambots.version>7.2.1</telegrambots.version>
+        <telegrambots.version>7.6.0</telegrambots.version>
     </properties>
     <developers>
         <developer>
@@ -152,17 +152,7 @@
         </dependency>
         <dependency>
             <groupId>org.telegram</groupId>
-            <artifactId>telegrambots-abilities</artifactId>
-            <version>${telegrambots.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.telegram</groupId>
             <artifactId>telegrambots-client</artifactId>
-            <version>${telegrambots.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.telegram</groupId>
-            <artifactId>telegrambots-extensions</artifactId>
             <version>${telegrambots.version}</version>
         </dependency>
 

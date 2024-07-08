@@ -1,5 +1,6 @@
 package com.alexaf.salarycalc.telegram;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.context.annotation.Configuration;
@@ -8,13 +9,14 @@ import org.telegram.telegrambots.longpolling.TelegramBotsLongPollingApplication;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Configuration
+@Slf4j
 @ConditionalOnBean(TelegramConfig.class)
 public class BotRegistrar {
 
     @EventListener
     public void handleApplicationStartedEvent(ApplicationStartedEvent event) {
         try {
-            var bot = event.getApplicationContext().getBean(SalaryBot.class);
+            var bot = event.getApplicationContext().getBean(CalcBot.class);
             var token = event.getApplicationContext().getEnvironment().getProperty("telegram.bot-token");
             TelegramBotsLongPollingApplication botsApplication = new TelegramBotsLongPollingApplication();
             // Register your newly created AbilityBot
@@ -24,7 +26,7 @@ public class BotRegistrar {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        System.out.println("Telegram bot started");
+        System.out.println("Telegram bot registered");
     }
 
 }

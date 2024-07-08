@@ -1,11 +1,14 @@
 package com.alexaf.salarycalc.telegram.service;
 
-import com.alexaf.salarycalc.dto.View;
-import com.alexaf.salarycalc.service.Calculator;
+import com.alexaf.salarycalc.goal.GoalService;
+import com.alexaf.salarycalc.goal.repository.Goal;
+import com.alexaf.salarycalc.service.DistributionService;
+import com.alexaf.salarycalc.telegram.Buttons;
 import com.alexaf.salarycalc.telegram.ChatState;
-import com.alexaf.salarycalc.telegram.CountAction;
 import com.alexaf.salarycalc.telegram.KeyboardFactory;
+import com.alexaf.salarycalc.telegram.SilentSender;
 import com.alexaf.salarycalc.telegram.TelegramConfig;
+import com.alexaf.salarycalc.user.UserService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -13,16 +16,22 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
-import org.telegram.telegrambots.abilitybots.api.sender.SilentSender;
+import org.springframework.transaction.annotation.Transactional;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.message.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static com.alexaf.salarycalc.telegram.Buttons.GET_GOALS;
 import static com.alexaf.salarycalc.telegram.ChatState.SELECT_ACTION;
 import static com.alexaf.salarycalc.telegram.ChatState.STOPPED_BOT;
+import static com.alexaf.salarycalc.telegram.ChatState.TYPE_SALARY_ACTION;
 import static com.alexaf.salarycalc.telegram.Constants.START_TEXT;
-import static com.alexaf.salarycalc.telegram.CountAction.GET_DEFAULTS;
 
 @Service
 @Slf4j
@@ -31,9 +40,11 @@ import static com.alexaf.salarycalc.telegram.CountAction.GET_DEFAULTS;
 public class TelegramResponseHandler {
 
     private final ObjectWriter writer = new ObjectMapper().writerWithDefaultPrettyPrinter();
-    private final Calculator calculator;
+    private final DistributionService distributionService;
     private final TelegramService telegramService;
     private final SilentSender sender;
+    private final GoalService goalService;
+    private final UserService userService;
 
 
     public void replyToStart(long chatId) {
@@ -41,17 +52,18 @@ public class TelegramResponseHandler {
     }
 
     public void replyToSelect(long chatId, Message message) {
-        if (message.getText().equalsIgnoreCase(CountAction.COUNT.getCyrillic())) {
-            replyToCountAction(chatId, message);
+        if (message.getText().equalsIgnoreCase(Buttons.ADD_INCOME.getCyrillic())) {
+            replyToAddIncomeAction(chatId, message);
         } else if (message.getText().equalsIgnoreCase("В начало")) {
             replyToStart(chatId);
-        } else if (message.getText().equalsIgnoreCase(GET_DEFAULTS.getCyrillic())) {
-            replyToGetDefaults(chatId, message);
+        } else if (message.getText().equalsIgnoreCase(GET_GOALS.getCyrillic())) {
+            replyToGetGoalsAction(chatId, message);
         } else {
             promptWithKeyboardForState(chatId, "Такого действия нет, выбери из предложенных", KeyboardFactory.getActions(), SELECT_ACTION);
         }
     }
 
+    @Transactional
     public void replyToButtons(long chatId, Message message) {
         if (message.getText().equalsIgnoreCase("/stop")) {
             stopChat(chatId);
@@ -59,18 +71,36 @@ public class TelegramResponseHandler {
 
         switch (telegramService.getUserChatState(chatId)) {
             case WELCOME, SELECT_ACTION -> replyToSelect(chatId, message);
-            case COUNT_ACTION -> replyToCountAction(chatId, message);
-            case TYPE_SALARY_ACTION -> replyToSalaryAnswer(chatId, message);
-            case GET_DEFAULTS_ACTION -> replyToGetDefaults(chatId, message);
+            case ADD_INCOME_ACTION -> replyToAddIncomeAction(chatId, message);
+            case TYPE_INCOME_ACTION -> replyToTypeIncomeAction(chatId, message);
+            case GET_GOALS_ACTION -> replyToGetGoalsAction(chatId, message);
+            case ADD_SALARY_ACTION -> replyToAddSalary(chatId, message);
             default -> unexpectedMessage(chatId);
         }
     }
 
-    private void replyToGetDefaults(long chatId, Message message) {
+    private void replyToAddSalary(long chatId, Message message) {
+        promptWithKeyboardForState(
+                chatId,
+                "Введи значение зарплаты. Она будет использоваться для твоих расчётов",
+                new ReplyKeyboardRemove(true),
+                TYPE_SALARY_ACTION
+        );
+    }
+
+    private void replyToGetGoalsAction(long chatId, Message message) {
         SendMessage.SendMessageBuilder<?, ?> smBuilder = SendMessage.builder()
                 .chatId(chatId);
         try {
-            smBuilder.text(writer.writeValueAsString(calculator.getDefaults()));
+            List<Goal> goals = goalService.findActiveByUserIdSortByPriority(userService.getByTelegramId(chatId).getId());
+            smBuilder.text(writer.writeValueAsString(goals.stream().collect(Collectors.toMap(
+                    Goal::getName,
+                    goal -> switch (goal.getType()) {
+                        case FIXED_AMOUNT_WITHOUT_DEADLINE -> goal.getMonthlyAmount().toString();
+                        case MONTHLY_PERCENTAGE_WITHOUT_DEADLINE -> goal.getMonthlyAmount() + "%";
+                        default -> "Не реализовано";
+                    }
+            ))));
         } catch (JsonProcessingException e) {
             log.error(e.getMessage());
             smBuilder.text("При попытке генерации ответа произошла ошибка. Попробуй ещё раз");
@@ -99,14 +129,14 @@ public class TelegramResponseHandler {
         sender.execute(sendMessage);
     }
 
-    private void replyToCountAction(long chatId, Message message) {
+    private void replyToAddIncomeAction(long chatId, Message message) {
         SendMessage sendMessage = SendMessage.builder()
                 .chatId(chatId)
                 .text("Введи сумму для расчёта")
                 .replyMarkup(new ReplyKeyboardRemove(true))
                 .build();
         sender.execute(sendMessage);
-        telegramService.updateChatState(chatId, ChatState.TYPE_SALARY_ACTION);
+        telegramService.updateChatState(chatId, ChatState.TYPE_INCOME_ACTION);
     }
 
     private void promptWithKeyboardForState(long chatId, String text, ReplyKeyboard buttons, ChatState nextState) {
@@ -119,12 +149,13 @@ public class TelegramResponseHandler {
         telegramService.updateChatState(chatId, nextState);
     }
 
-    private void replyToSalaryAnswer(long chatId, Message message) {
+    private void replyToTypeIncomeAction(long chatId, Message message) {
         SendMessage.SendMessageBuilder<?, ?> smBuilder = SendMessage.builder()
                 .chatId(chatId);
         try {
-            String salary = message.getText().replace(",", "");
-            View result = calculator.calculate(Double.parseDouble(salary));
+            String salary = message.getText().replace(",", ".");
+            Map<String, BigDecimal> result = distributionService.distributeIncome(chatId, new BigDecimal(salary));
+
             smBuilder.text("Вот как надо распределить средства:\n" + writer.writeValueAsString(result));
             smBuilder.replyMarkup(KeyboardFactory.getActions());
         } catch (NumberFormatException e) {

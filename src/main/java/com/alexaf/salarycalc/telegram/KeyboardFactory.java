@@ -9,22 +9,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.alexaf.salarycalc.telegram.CountAction.GET_DEFAULTS;
+import static com.alexaf.salarycalc.telegram.Buttons.GET_GOALS;
 
 public class KeyboardFactory {
 
     public static final KeyboardRow TO_START_ROW = new KeyboardRow(List.of(new KeyboardButton("В начало")));
-    public static final KeyboardRow GET_DEFAULTS_ROW = new KeyboardRow(List.of(new KeyboardButton(GET_DEFAULTS.getCyrillic())));
+    public static final KeyboardRow GET_DEFAULTS_ROW = new KeyboardRow(List.of(new KeyboardButton(GET_GOALS.getCyrillic())));
 
     public static ReplyKeyboard getActions() {
         List<KeyboardRow> rows = new ArrayList<>();
         // TODO: refactor this
-//        for (CountAction action : CountAction.values()) {
+//        for (Buttons action : Buttons.values()) {
 //            KeyboardRow row = new KeyboardRow();
 //            row.add(new KeyboardButton(action.getCyrillic()));
 //            rows.add(row);
 //        }
-        rows.add(new KeyboardRow(List.of(new KeyboardButton(CountAction.COUNT.getCyrillic()))));
+        rows.add(new KeyboardRow(List.of(new KeyboardButton(Buttons.ADD_INCOME.getCyrillic()))));
         return getDefaultReply(rows);
     }
 
