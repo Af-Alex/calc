@@ -1,6 +1,6 @@
 package com.alexaf.salarycalc.user;
 
-import com.alexaf.salarycalc.telegram.ChatState;
+import com.alexaf.salarycalc.telegram.statics.ChatState;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

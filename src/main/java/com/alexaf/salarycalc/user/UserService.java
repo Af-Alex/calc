@@ -1,7 +1,7 @@
 package com.alexaf.salarycalc.user;
 
 import com.alexaf.salarycalc.exception.EntityNotFoundException;
-import com.alexaf.salarycalc.telegram.ChatState;
+import com.alexaf.salarycalc.telegram.statics.ChatState;
 import com.alexaf.salarycalc.user.repository.User;
 import com.alexaf.salarycalc.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -19,9 +19,6 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
 
-    public Optional<User> findById(UUID id) {
-        return userRepository.findById(id);
-    }
 
     public User getById(UUID id) {
         return userRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(User.class, id));
@@ -48,10 +45,12 @@ public class UserService {
         return userRepository.findByTelegramId(userId).map(userMapper::toDto).orElseThrow(() -> new EntityNotFoundException(User.class, userId));
     }
 
-    public void updateChatState(Long userId, ChatState chatState) {
-        var user = userRepository.findByTelegramId(userId).orElseThrow(() -> new EntityNotFoundException(User.class, userId));
-        user.setChatState(chatState);
-        create(user);
+    public void updateChatState(UUID userId, ChatState newState) {
+        userRepository.updateChatState(userId, newState);
+    }
+
+    public void updateChatState(Long userId, ChatState newState) {
+        userRepository.updateChatState(userId, newState);
     }
 
 }

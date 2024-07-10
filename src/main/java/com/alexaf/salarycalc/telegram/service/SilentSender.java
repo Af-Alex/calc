@@ -1,5 +1,6 @@
-package com.alexaf.salarycalc.telegram;
+package com.alexaf.salarycalc.telegram.service;
 
+import com.alexaf.salarycalc.user.UserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -54,5 +55,9 @@ public class SilentSender {
         smsg.enableMarkdown(format);
 
         return execute(smsg);
+    }
+
+    public void send(String message, UserDto user) {
+        this.send(message, user.getTelegramId());
     }
 }

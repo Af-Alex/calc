@@ -2,7 +2,7 @@ package com.alexaf.salarycalc.user.repository;
 
 import com.alexaf.salarycalc.goal.repository.Goal;
 import com.alexaf.salarycalc.salary.repository.Salary;
-import com.alexaf.salarycalc.telegram.ChatState;
+import com.alexaf.salarycalc.telegram.statics.ChatState;
 import com.alexaf.salarycalc.utils.entity.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

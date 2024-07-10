@@ -1,6 +1,12 @@
 package com.alexaf.salarycalc.telegram;
 
+import com.alexaf.salarycalc.telegram.command.Command;
+import com.alexaf.salarycalc.telegram.command.registry.ChatStateCommandRegistry;
+import com.alexaf.salarycalc.telegram.service.SilentSender;
 import com.alexaf.salarycalc.telegram.service.TelegramService;
+import com.alexaf.salarycalc.telegram.statics.ChatState;
+import com.alexaf.salarycalc.telegram.statics.KeyboardFactory;
+import com.alexaf.salarycalc.user.UserDto;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -8,14 +14,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.longpolling.util.LongPollingSingleThreadUpdateConsumer;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.User;
 
-import java.util.stream.Stream;
-
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
-import static java.util.Objects.isNull;
 import static java.util.Optional.ofNullable;
 
 
@@ -25,23 +29,18 @@ import static java.util.Optional.ofNullable;
 public class SalaryBot implements LongPollingSingleThreadUpdateConsumer {
 
     private final TelegramService telegramService;
-    private final Long creatorId;
     private final SilentSender sender;
+    private final ChatStateCommandRegistry commandRegistry;
+
 
     @Autowired
     public SalaryBot(
-            SilentSender silent,
-            TelegramService telegramService,
-            @Value("${telegram.creator-id:371923388}") Long creatorId
+            SilentSender sender, TelegramService telegramService, ChatStateCommandRegistry commandRegistry, @Value("${telegram.creator-id:371923388}") Long creatorId
     ) {
-        this.sender = silent;
-        this.creatorId = creatorId;
+        this.sender = sender;
+        this.commandRegistry = commandRegistry;
         this.telegramService = telegramService;
-        silent.send("Bot started", creatorId);
-    }
-
-    public long creatorId() {
-        return creatorId;
+        this.sender.send("Bot started", creatorId);
     }
 
     @Override
@@ -50,45 +49,49 @@ public class SalaryBot implements LongPollingSingleThreadUpdateConsumer {
         log.debug("Salary bot consumes update: {}", update);
         long millisStarted = System.currentTimeMillis();
 
-        Stream.of(update)
-                .filter(this::checkUserIsActive)
-                .map(this::addUserIfNotExists);
-        // todo :
-//                    .map(this::resolveCommand)
-//                    .map(::executeCommand)
+        UserDto user = extractUser(update);
+        if (!user.isActive())
+            sender.send("Аккаунт отключен", user.getTelegramId());
 
+        Command command;
+
+        try {
+            command = commandRegistry.getCommand(user.getChatState());
+        } catch (NullPointerException e) {
+            log.error("Не нашлось команды для пользователя {}", user);
+            SendMessage errorMessage = SendMessage.builder()
+                    .chatId(user.getTelegramId())
+                    .text("Не удалось определить твоё состояние. Ошибка на нашей стороне, скоро поправим! а пока - в главное меню")
+                    .replyMarkup(KeyboardFactory.mainMenuKeyboard())
+                    .build();
+            sender.execute(errorMessage);
+            telegramService.updateChatState(user, ChatState.MAIN_MENU);
+            return;
+        }
+
+        try {
+            command.execute(update, user);
+        } catch (Exception e) {
+            log.error("Ошибка выполнения команды", e);
+            SendMessage errorMessage = SendMessage.builder()
+                    .chatId(user.getTelegramId())
+                    .text("Возникла ошибка: " + e.getMessage())
+                    .replyMarkup(KeyboardFactory.mainMenuKeyboard())
+                    .build();
+            sender.execute(errorMessage);
+            telegramService.updateChatState(user, ChatState.MAIN_MENU);
+        }
 
         long processingTime = System.currentTimeMillis() - millisStarted;
         log.info(format("Processing of update [%s] ended at %s%n---> Processing time: [%d ms] <---%n", update.getUpdateId(), now(), processingTime));
     }
 
-    private User extractUser(Update update) {
-        return ofNullable(update.getMessage().getFrom()).orElseThrow(
-                () -> new RuntimeException("Не удалось извлечь пользователя из запроса")
-        );
-    }
+    private UserDto extractUser(Update update) {
+        User user = ofNullable(update.getMessage().getFrom())
+                .orElseThrow(() -> new IllegalArgumentException("Не удалось извлечь пользователя из запроса"));
 
-
-    Update addUserIfNotExists(Update update) {
-        User endUser = extractUser(update);
-
-        if (telegramService.existsById(endUser.getId()))
-            log.debug("User {} already registered", endUser.getUserName());
-        else {
-            telegramService.registerUser(endUser);
-        }
-
-        return update;
-    }
-
-    boolean checkUserIsActive(Update update) {
-        User user = extractUser(update);
-        if (isNull(user)) {
-            return true;
-        }
-
-        return user.getId() == creatorId() || telegramService.find(user).orElseGet(() -> telegramService.registerUser(user))
-                .isActive();
+        return telegramService.find(user)
+                .orElseGet(() -> telegramService.registerUser(user));
     }
 
 }

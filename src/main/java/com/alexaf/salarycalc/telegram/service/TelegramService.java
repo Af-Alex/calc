@@ -1,9 +1,8 @@
 package com.alexaf.salarycalc.telegram.service;
 
-import com.alexaf.salarycalc.telegram.ChatState;
 import com.alexaf.salarycalc.telegram.TelegramConfig;
+import com.alexaf.salarycalc.telegram.statics.ChatState;
 import com.alexaf.salarycalc.user.UserDto;
-import com.alexaf.salarycalc.user.UserMapper;
 import com.alexaf.salarycalc.user.UserService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -24,7 +23,6 @@ import java.util.Optional;
 public class TelegramService {
 
     private final UserService userService;
-    private final UserMapper userMapper;
 
     public UserDto registerUser(@Valid @NotNull User user) {
         var userDto = UserDto.builder()
@@ -43,17 +41,8 @@ public class TelegramService {
         return userService.findByTelegramId(user.getId());
     }
 
-    public boolean existsById(Long userId) {
-        return userService.existsByTelegramId(userId);
-    }
-
-    public ChatState getUserChatState(Long userId) {
-        UserDto user = userService.getByTelegramId(userId);
-        return user.getChatState();
-    }
-
-    public void updateChatState(Long userId, ChatState newState) {
-        userService.updateChatState(userId, newState);
+    public void updateChatState(UserDto user, ChatState newState) {
+        userService.updateChatState(user.getId(), newState);
     }
 
 }

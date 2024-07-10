@@ -28,17 +28,6 @@ spring:
     enabled: true
     default-schema: ${DEFAULT_SCHEMA}
 
-# Application configuration (tax in %)
-calc:
-  service:
-    month-salary: 180000
-    kata-tax: 0.17
-    airbag: 30000
-    mandatory: 46000
-    apartment: 29000
-    julia-needs: 13000
-    julia-loan: 8300
-
 # Logging configuration
 logging:
   level:
@@ -52,4 +41,3 @@ telegram:
   bot-name: ${TG_BOT_NAME}
   #  Id главного пользователя telegram, которому доступно управление ботом
   creator-id: 371923388
-  cache: true

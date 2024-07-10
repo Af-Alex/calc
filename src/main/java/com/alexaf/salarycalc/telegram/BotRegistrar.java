@@ -16,7 +16,7 @@ public class BotRegistrar {
     @EventListener
     public void handleApplicationStartedEvent(ApplicationStartedEvent event) {
         try {
-            var bot = event.getApplicationContext().getBean(CalcBot.class);
+            var bot = event.getApplicationContext().getBean(SalaryBot.class);
             var token = event.getApplicationContext().getEnvironment().getProperty("telegram.bot-token");
             TelegramBotsLongPollingApplication botsApplication = new TelegramBotsLongPollingApplication();
             // Register your newly created AbilityBot
