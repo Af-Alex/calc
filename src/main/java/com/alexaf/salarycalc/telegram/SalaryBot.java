@@ -1,7 +1,7 @@
 package com.alexaf.salarycalc.telegram;
 
+import com.alexaf.salarycalc.telegram.command.ChatStateCommandRegistry;
 import com.alexaf.salarycalc.telegram.command.Command;
-import com.alexaf.salarycalc.telegram.command.registry.ChatStateCommandRegistry;
 import com.alexaf.salarycalc.telegram.service.SilentSender;
 import com.alexaf.salarycalc.telegram.service.TelegramService;
 import com.alexaf.salarycalc.telegram.statics.ChatState;
@@ -57,11 +57,11 @@ public class SalaryBot implements LongPollingSingleThreadUpdateConsumer {
 
         try {
             command = commandRegistry.getCommand(user.getChatState());
-        } catch (NullPointerException e) {
+        } catch (IllegalArgumentException e) {
             log.error("Не нашлось команды для пользователя {}", user);
             SendMessage errorMessage = SendMessage.builder()
                     .chatId(user.getTelegramId())
-                    .text("Не удалось определить твоё состояние. Ошибка на нашей стороне, скоро поправим! а пока - в главное меню")
+                    .text("Не удалось определить твоё состояние. Ошибка на нашей стороне, скоро поправим!\nA пока - в главное меню")
                     .replyMarkup(KeyboardFactory.mainMenuKeyboard())
                     .build();
             sender.execute(errorMessage);
@@ -75,7 +75,7 @@ public class SalaryBot implements LongPollingSingleThreadUpdateConsumer {
             log.error("Ошибка выполнения команды", e);
             SendMessage errorMessage = SendMessage.builder()
                     .chatId(user.getTelegramId())
-                    .text("Возникла ошибка: " + e.getMessage())
+                    .text("Возникла ошибка: " + e.getMessage() + "\nВозвращаемся в главное меню")
                     .replyMarkup(KeyboardFactory.mainMenuKeyboard())
                     .build();
             sender.execute(errorMessage);
