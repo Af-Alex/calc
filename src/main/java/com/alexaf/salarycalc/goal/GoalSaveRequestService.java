@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static java.lang.String.format;
@@ -44,26 +45,30 @@ public class GoalSaveRequestService {
         );
     }
 
+    public Optional<GoalSaveRequestDto> findByUserId(UUID userId) {
+        return repository.findByUser_Id(userId).map(mapper::toDto);
+    }
+
     public GoalSaveRequestDto getById(UUID id) {
         return repository.findById(id)
                 .map(goalSaveRequestMapper::toDto)
                 .orElseThrow(() -> new EntityNotFoundException(GoalSaveRequest.class, id));
     }
 
-    public UUID create(@Valid GoalSaveRequestDto dto) {
+    public GoalSaveRequestDto create(@Valid GoalSaveRequestDto dto) {
         GoalSaveRequest entity = mapper.createFromDto(dto);
 
         entity.setUser(userService.getById(dto.getUserId()));
 
-        return repository.save(entity).getId();
+        return mapper.toDto(repository.save(entity));
     }
 
-    public UUID update(@Valid GoalSaveRequestDto dto) {
-        GoalSaveRequest entity = mapper.createFromDto(dto);
-
-        entity.setUser(userService.getById(dto.getUserId()));
-
-        return repository.save(entity).getId();
+    public GoalSaveRequestDto update(@Valid GoalSaveRequestDto dto) {
+        GoalSaveRequest entity = mapper.partialUpdate(
+                getEntityByUserId(dto.getUserId()),
+                mapper.createFromDto(dto)
+        );
+        return mapper.toDto(repository.save(entity));
     }
 
 }

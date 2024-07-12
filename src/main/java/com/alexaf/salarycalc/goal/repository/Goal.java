@@ -22,6 +22,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
+/**
+ * Обновил поля? Обнови {@link GoalSaveRequest}
+ */
 @Entity
 @Getter
 @Setter

@@ -46,4 +46,7 @@ public class GoalSaveRequestDto implements Serializable {
 
     private BigDecimal monthlyAmount;
 
+    public GoalSaveRequestDto(UUID userId) {
+        this.userId = userId;
+    }
 }
