@@ -1,4 +1,4 @@
-package com.alexaf.salarycalc.telegram.command.registry;
+package com.alexaf.salarycalc.telegram.command;
 
 import com.alexaf.salarycalc.telegram.command.abstracts.ChatStateCommand;
 import com.alexaf.salarycalc.telegram.statics.ChatState;
@@ -9,6 +9,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static java.lang.String.format;
+import static java.util.Optional.ofNullable;
 
 @Component
 public class ChatStateCommandRegistry {
@@ -21,8 +24,10 @@ public class ChatStateCommandRegistry {
         commandMap = Collections.unmodifiableMap(modifiable);
     }
 
-    public ChatStateCommand getCommand(ChatState commandName) {
-        return commandMap.get(commandName);
+    public ChatStateCommand getCommand(ChatState chatState) {
+        return ofNullable(commandMap.get(chatState)).orElseThrow(
+                () -> new IllegalArgumentException(format("Функционал %s ещё не реализован", chatState))
+        );
     }
 
 }

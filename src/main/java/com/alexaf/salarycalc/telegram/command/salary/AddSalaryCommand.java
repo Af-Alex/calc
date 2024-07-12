@@ -34,10 +34,10 @@ public class AddSalaryCommand extends ManageSalaryCommand {
             var button = Button.getByText(message);
             switch (button) {
                 case ADD -> reply(user.getTelegramId(), "Укажи значение зарплаты", mainMenuButton());
-                case MAIN_MENU -> forceUserToMainMenu(update, user);
+                case MAIN_MENU -> forceUserToMainMenu(user);
                 default -> {
-                    sender.send("Как ты сюда попал? Возвращаемся в главное меню", user);
-                    forceUserToMainMenu(update, user);
+                    sender.send("Не удалось прочитать значение. Возвращаемся в главное меню", user);
+                    forceUserToMainMenu(user);
                 }
             }
         } catch (IllegalArgumentException ignore) {
@@ -45,11 +45,11 @@ public class AddSalaryCommand extends ManageSalaryCommand {
                 var salary = new BigDecimal(message, new MathContext(2, RoundingMode.HALF_UP));
                 salaryService.create(user.getId(), salary);
                 reply(user.getTelegramId(), "Зарплата успешно добавлена. Идём в главное меню", removeKeyboard());
-                forceUserToMainMenu(update, user);
+                forceUserToMainMenu(user);
             } catch (NumberFormatException e) {
                 reply(
                         user.getTelegramId(),
-                        "Не удалось прочитать указанное значение. Если указываешь десятичные значение, пиши их после точки (не запятой)",
+                        "Не удалось прочитать указанное значение. Если указываешь десятичное значение, пиши их после точки (не запятой)",
                         mainMenuButton()
                 );
             }
