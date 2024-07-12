@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -24,8 +25,9 @@ public class UserDto implements Serializable {
     private Long telegramId;
     private String telegramNickname;
     private String email;
+    @ToString.Exclude //todo: добавить TelegramUserSaveRequest
     private String password;
-    private boolean active = true;
+    private boolean active;
     private String firstname;
     private String lastname;
     private ChatState chatState;
