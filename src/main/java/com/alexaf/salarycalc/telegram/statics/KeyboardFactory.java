@@ -38,9 +38,13 @@ public class KeyboardFactory {
         var rows = getButtonsRows(chatState);
 
         if (addMainMenu && !Arrays.asList(chatState.getButtons()).contains(MAIN_MENU))
-            rows.addFirst(new KeyboardRow(new KeyboardButton(MAIN_MENU.text)));
+            rows.addLast(new KeyboardRow(new KeyboardButton(MAIN_MENU.text)));
 
         return defaultReply(rows);
+    }
+
+    public static ReplyKeyboard getKeyboard(ChatState chatState) {
+        return getKeyboard(chatState, false);
     }
 
     public static ReplyKeyboard mainMenuButton() {
@@ -52,7 +56,7 @@ public class KeyboardFactory {
                 rows,
                 true,
                 true,
-                null,
+                true,
                 null,
                 null
         );
