@@ -34,7 +34,7 @@ public class MainMenuCommand extends SendCommand {
                 case GOALS -> reply(user.getTelegramId(), "Управление целями", getKeyboard(MANAGE_GOAL, true), MANAGE_GOAL);
                 case CONTRIBUTION -> reply(user.getTelegramId(), "Управление поступлениями", getKeyboard(MANAGE_CONTRIBUTION, true), MANAGE_CONTRIBUTION);
                 case SALARY -> reply(user.getTelegramId(), "Управление зарплатой", getKeyboard(MANAGE_SALARY, true), MANAGE_SALARY);
-                default -> sender.send("Не удалось прочитать значение. Выбери действие с помощью кнопок", user);
+                default -> chooseButtonReply(user);
             }
         } catch (IllegalArgumentException ignore) {
             reply(user.getTelegramId(), "Выбери действие из кнопок на панели", getKeyboard(getState(), true));
@@ -51,7 +51,7 @@ public class MainMenuCommand extends SendCommand {
     }
 
     protected void chooseButtonReply(UserDto user) {
-        sender.send("Не удалось прочитать значение. Используй кнопки", user);
+        reply(user.getTelegramId(), "Не удалось прочитать значение. Выбери действие с помощью кнопок", getKeyboard(getState()));
     }
 
 }

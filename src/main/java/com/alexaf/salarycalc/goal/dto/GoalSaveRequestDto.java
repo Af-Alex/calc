@@ -15,6 +15,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static java.util.Objects.nonNull;
+
 /**
  * DTO for {@link GoalSaveRequest}
  */
@@ -48,5 +50,20 @@ public class GoalSaveRequestDto implements Serializable {
 
     public GoalSaveRequestDto(UUID userId) {
         this.userId = userId;
+    }
+
+    @Override
+    public String toString() {
+        var sb = new StringBuilder();
+        if (nonNull(name)) sb.append("\nНазвание: ").append(name);
+        if (nonNull(priority)) sb.append("\nПриоритет: ").append(priority);
+        if (nonNull(type)) sb.append("\nТип: ").append(type.getText());
+        if (nonNull(monthlyAmount)) {
+            sb.append("\nЕжемесячная сумма: ").append(monthlyAmount);
+            if (type.name().contains("PERCENT")) sb.append("%");
+        }
+        if (nonNull(targetAmount)) sb.append("\nОткладывать до накопления суммы: ").append(targetAmount);
+        if (nonNull(deadline)) sb.append("\nОткладывать до: ").append(deadline);
+        return sb.toString();
     }
 }

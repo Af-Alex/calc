@@ -6,13 +6,21 @@ import static java.lang.String.format;
 
 public enum Button {
     MAIN_MENU("Главное меню"),
+    HELP("Помощь"),
     GOALS("Цели"),
     SALARY("Зарплата"),
-    CONTRIBUTION("Доход"),
+    CONTRIBUTION("Пополнения"),
+
     ADD("Добавить"),
-    REMOVE("Удалить"),
+    DELETE("Удалить"),
     GET("Получить информацию"),
-    UPDATE("Обновить")
+    UPDATE("Обновить"),
+
+    ACCEPT("Подтвердить"),
+    REJECT("Отклонить"),
+
+    ONE("1"),
+    TWO("2")
 ;
     public final String text;
 
@@ -20,8 +28,9 @@ public enum Button {
         this.text = text;
     }
 
-    public static final Button[] CRUD_BUTTONS = new Button[]{GET, ADD, UPDATE, REMOVE};
+    public static final Button[] CRUD_BUTTONS = new Button[]{GET, ADD, UPDATE, DELETE};
     public static final Button[] MAIN_MENU_BUTTON = new Button[]{MAIN_MENU};
+    public static final Button[] NUMBERS = new Button[]{ONE, TWO};
 
     public static Button getByText(String text) {
         return Arrays.stream(values())

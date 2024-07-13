@@ -1,5 +1,6 @@
 package com.alexaf.salarycalc.goal;
 
+import com.alexaf.salarycalc.goal.dto.GoalDto;
 import com.alexaf.salarycalc.goal.dto.GoalSaveRequestDto;
 import com.alexaf.salarycalc.goal.repository.GoalSaveRequest;
 import org.mapstruct.BeanMapping;
@@ -25,4 +26,11 @@ public interface GoalSaveRequestMapper {
             ignoreUnmappedSourceProperties = {"id", "created", "user"}
     )
     GoalSaveRequest partialUpdate(@MappingTarget GoalSaveRequest target, GoalSaveRequest source);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "created", ignore = true)
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "userId", source = "user.id")
+    @BeanMapping(ignoreUnmappedSourceProperties = {"user", "id", "created"})
+    GoalDto toGoalDto(GoalSaveRequest goalSaveRequestEntity);
 }

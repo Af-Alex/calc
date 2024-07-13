@@ -1,12 +1,15 @@
 package com.alexaf.salarycalc.goal;
 
+import com.alexaf.salarycalc.goal.dto.GoalDto;
 import com.alexaf.salarycalc.goal.repository.Goal;
 import com.alexaf.salarycalc.goal.repository.GoalRepository;
 import com.alexaf.salarycalc.user.UserService;
 import com.alexaf.salarycalc.user.repository.User;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -14,11 +17,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@Validated
 @Transactional
 @RequiredArgsConstructor
 public class GoalService {
 
     private final GoalRepository goalRepository;
+    private final GoalMapper goalMapper;
     private final UserService userService;
 
     public List<Goal> findAllByUserId(UUID userId) {
@@ -35,6 +40,13 @@ public class GoalService {
 
     public Goal save(Goal goal) {
         return goalRepository.save(goal);
+    }
+
+    public GoalDto create(@Valid GoalDto goalDto) {
+        var entity = goalMapper.createFromDto(goalDto);
+        entity.setUser(userService.getById(goalDto.getUserId()));
+
+        return goalMapper.toDto(goalRepository.save(entity));
     }
 
     public void createDefaultGoals(UUID userId) {
