@@ -59,7 +59,7 @@ public class GoalService {
 
         // обязательно откладывать 10% на подушку
         Goal airbagGoal = new Goal(user, GoalType.MONTHLY_PERCENTAGE_WITHOUT_DEADLINE, "Подушка безопасности");
-        airbagGoal.setMonthlyAmount(new BigDecimal("0.1"));
+        airbagGoal.setMonthlyAmount(new BigDecimal("10"));
 
         // откладывать 50000 на обязательные расходы
         Goal reqiredGoal = new Goal(user, GoalType.FIXED_AMOUNT_WITHOUT_DEADLINE, "Обязательные расходы");
