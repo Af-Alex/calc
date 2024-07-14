@@ -1,5 +1,6 @@
 package com.alexaf.salarycalc.goal;
 
+import com.alexaf.salarycalc.exception.EntityNotFoundException;
 import com.alexaf.salarycalc.goal.dto.GoalDto;
 import com.alexaf.salarycalc.goal.repository.Goal;
 import com.alexaf.salarycalc.goal.repository.GoalRepository;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @Validated
@@ -30,16 +32,19 @@ public class GoalService {
         return goalRepository.findByUser_Id(userId);
     }
 
-    public List<Goal> findActiveByUserIdSortByPriority(UUID userId) {
-        return goalRepository.findByActiveTrueAndUser_IdOrderByPriorityAsc(userId);
+    public List<GoalDto> findActiveByUserIdSortByPriority(UUID userId) {
+        return goalRepository.findByActiveTrueAndUser_IdOrderByPriorityAsc(userId)
+                .stream()
+                .map(goalMapper::toDto)
+                .collect(Collectors.toList());
     }
 
     public Optional<Goal> findById(UUID id) {
         return goalRepository.findById(id);
     }
 
-    public Goal save(Goal goal) {
-        return goalRepository.save(goal);
+    public Goal getById(UUID id) {
+        return goalRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(Goal.class, id));
     }
 
     public GoalDto create(@Valid GoalDto goalDto) {
@@ -63,4 +68,10 @@ public class GoalService {
         goalRepository.saveAll(List.of(airbagGoal, reqiredGoal));
     }
 
+    public GoalDto update(GoalDto goalDto) {
+        var entity = getById(goalDto.getId());
+        goalMapper.partialUpdate(entity, goalDto);
+
+        return goalMapper.toDto(goalRepository.save(entity));
+    }
 }

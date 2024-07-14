@@ -1,9 +1,9 @@
 package com.alexaf.salarycalc.service;
 
 import com.alexaf.salarycalc.contribution.ContributionService;
-import com.alexaf.salarycalc.contribution.repository.Contribution;
+import com.alexaf.salarycalc.contribution.dto.ContributionDto;
 import com.alexaf.salarycalc.goal.GoalService;
-import com.alexaf.salarycalc.goal.repository.Goal;
+import com.alexaf.salarycalc.goal.dto.GoalDto;
 import com.alexaf.salarycalc.salary.SalaryService;
 import com.alexaf.salarycalc.user.UserService;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -39,7 +40,7 @@ public class DistributionService {
     @Transactional
     public Map<String, BigDecimal> distributeIncome(UUID userId, BigDecimal income) {
         // Получаем все активные цели пользователя
-        List<Goal> goals = goalService.findActiveByUserIdSortByPriority(userId);
+        List<GoalDto> goals = goalService.findActiveByUserIdSortByPriority(userId);
         if (goals.isEmpty()) {
             throw new IllegalArgumentException("No active goals found for user");
         }
@@ -48,8 +49,7 @@ public class DistributionService {
         BigDecimal remainingAmount = income;
         Map<String, BigDecimal> prediction = new HashMap<>();
 
-
-        for (Goal goal : goals) {
+        for (GoalDto goal : goals) {
             log.debug("Обрабатываем цель \"{}\"", goal.getName());
             if (goal.getTargetAmount() != null && goal.getTargetAmount().compareTo(goal.getBalance()) <= 0) {
                 log.debug("Цель уже выполнена");
@@ -58,7 +58,7 @@ public class DistributionService {
             if (goal.getDeadline() != null && goal.getDeadline().isBefore(LocalDate.now())) {
                 log.debug("Цель просрочена");
                 goal.setActive(false);
-                goalService.save(goal);
+                goalService.update(goal);
                 continue;
             }
 
@@ -73,11 +73,11 @@ public class DistributionService {
             prediction.put(goal.getName(), contributionValue); // на этом этапе завершается вычисление суммы, на которую пополняется счёт цели
             remainingAmount = remainingAmount.subtract(contributionValue);
 
-            Contribution contribution = new Contribution(goal, contributionValue, now());
-            contributionService.save(contribution);
+            ContributionDto contribution = new ContributionDto(goal.getId(), contributionValue, now());
+            contributionService.create(contribution);
 
             goal.setBalance(goal.getBalance().add(contributionValue));
-            goalService.save(goal);
+            goalService.update(goal);
         }
 
         prediction.put("Остаток", remainingAmount);
@@ -85,22 +85,21 @@ public class DistributionService {
         return prediction;
     }
 
-    private BigDecimal calculateGoalContribution(Goal goal, BigDecimal income, BigDecimal remainingAmount, BigDecimal salary) {
+    private BigDecimal calculateGoalContribution(GoalDto goal, BigDecimal income, BigDecimal remainingAmount, BigDecimal salary) {
         return switch (goal.getType()) {
             case FIXED_AMOUNT_WITHOUT_DEADLINE -> calculateFixedAmountWithoutDeadline(goal, salary, income);
-            case MONTHLY_PERCENTAGE_WITHOUT_DEADLINE ->
-                    calculateMonthlyPercentageWithoutDeadline(goal, income);
+            case MONTHLY_PERCENTAGE_WITHOUT_DEADLINE -> calculateMonthlyPercentageWithoutDeadline(goal, income);
             default -> throw new RuntimeException("Not implemented");
         };
     }
 
-    private BigDecimal calculateFixedAmountWithoutDeadline(Goal goal, BigDecimal salary, BigDecimal income) {
+    private BigDecimal calculateFixedAmountWithoutDeadline(GoalDto goal, BigDecimal salary, BigDecimal income) {
         BigDecimal percentFromSalary = percentOf(income, salary); // какой процент составляет income от текущей ЗП
         return goal.getMonthlyAmount().multiply(percentFromSalary);
     }
 
-    private BigDecimal calculateMonthlyPercentageWithoutDeadline(Goal goal, BigDecimal income) {
-        return income.multiply(goal.getMonthlyAmount());
+    private BigDecimal calculateMonthlyPercentageWithoutDeadline(GoalDto goal, BigDecimal income) {
+        return income.multiply(goal.getMonthlyAmount().divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP));
     }
 
 }
