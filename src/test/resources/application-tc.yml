@@ -20,28 +20,17 @@ spring:
     open-in-view: false
     show-sql: true
     hibernate:
-      ddl-auto: validate
+      ddl-auto: none
   # Liquibase configuration
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yml
     enabled: true
     default-schema: calc
 
-# Application configuration (tax in %)
-#calc:
-#  service:
-#    month-salary: 180000
-#    kata-tax: 0.17
-#    airbag: 30000
-#    mandatory: 46000
-#    apartment: 29000
-#    julia-needs: 13000
-#    julia-loan: 8300
-
 # Logging configuration
 logging:
   level:
-    org.springframework: info
+    org.springframework: debug
     org.hibernate.SQL: debug
     root: debug
   charset:

@@ -21,7 +21,7 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <org.mapstruct.version>1.5.5.Final</org.mapstruct.version>
         <io.jsonwebtoken.version>0.12.5</io.jsonwebtoken.version>
-        <telegrambots.version>7.6.0</telegrambots.version>
+        <telegrambots.version>7.7.0</telegrambots.version>
     </properties>
     <developers>
         <developer>
@@ -54,11 +54,6 @@
     </profiles>
 
     <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
         <!-- База данных -->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -119,11 +114,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.security</groupId>
-            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
