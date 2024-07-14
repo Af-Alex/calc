@@ -5,8 +5,11 @@ import org.apache.commons.lang3.RandomStringUtils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class RandomGenerator {
+
+    public static final AtomicLong ID = new AtomicLong(0);
 
     private static final Random rand = new Random();
 
@@ -28,5 +31,9 @@ public class RandomGenerator {
 
     public static String strGen(int count) {
         return RandomStringUtils.randomAlphabetic(count);
+    }
+
+    public static String emailGen() {
+        return strGen(5) + ID.getAndIncrement() + "@gmail.com";
     }
 }
