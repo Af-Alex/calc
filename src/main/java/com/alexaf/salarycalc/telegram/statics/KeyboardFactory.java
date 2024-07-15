@@ -1,8 +1,11 @@
 package com.alexaf.salarycalc.telegram.statics;
 
+import org.springframework.data.util.Pair;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardRow;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 
@@ -35,6 +38,9 @@ public class KeyboardFactory {
     }
 
     public static ReplyKeyboard getKeyboard(ChatState chatState, boolean addMainMenu) {
+        if (chatState.getButtons() == null) {
+            return removeKeyboard();
+        }
         var rows = getButtonsRows(chatState);
 
         if (addMainMenu && !Arrays.asList(chatState.getButtons()).contains(MAIN_MENU))
@@ -55,7 +61,7 @@ public class KeyboardFactory {
         return new ReplyKeyboardMarkup(
                 rows,
                 true,
-                true,
+                false,
                 true,
                 null,
                 null
@@ -78,6 +84,28 @@ public class KeyboardFactory {
             if (currentRow.size() == 2) { // количество кнопок в одном ряду
                 rows.add(currentRow);
                 currentRow = new KeyboardRow();
+            }
+        }
+
+        // Добавить последнюю строку, если число кнопок нечётное
+        if (!currentRow.isEmpty()) {
+            rows.add(currentRow);
+        }
+
+        return rows;
+    }
+
+    public static LinkedList<InlineKeyboardRow> getInlineButtonsRows(Iterable<Pair<String, String>> pairs) {
+        var rows = new LinkedList<InlineKeyboardRow>();
+        var currentRow = new InlineKeyboardRow();
+
+        for (var pair : pairs) {
+            var button = new InlineKeyboardButton(pair.getFirst());
+            button.setCallbackData(pair.getSecond());
+            currentRow.add(button);
+            if (currentRow.size() == 2) { // количество кнопок в одном ряду
+                rows.add(currentRow);
+                currentRow = new InlineKeyboardRow();
             }
         }
 

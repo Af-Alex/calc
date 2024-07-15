@@ -46,7 +46,7 @@ public class GoalDto implements Serializable {
 
     private boolean active = true;
 
-    @NotNull(message = "Значение ужумесячной суммы не может отсутствовать")
+    @NotNull(message = "Значение ежемесячной суммы не может отсутствовать")
     @Positive(message = "Нельзя откладывать себе в убыток")
     private BigDecimal monthlyAmount;
 }

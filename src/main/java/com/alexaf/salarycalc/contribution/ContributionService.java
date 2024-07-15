@@ -29,7 +29,7 @@ public class ContributionService {
 
     public ContributionDto create(@Valid ContributionDto contributionDto) {
         var entity = contributionMapper.createFromDto(contributionDto);
-        entity.setGoal(goalService.getById(contributionDto.getGoalId()));
+        entity.setGoal(goalService.getEntityById(contributionDto.getGoalId()));
 
         return contributionMapper.toDto(contributionRepository.save(entity));
     }

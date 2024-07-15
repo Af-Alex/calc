@@ -20,7 +20,6 @@ import org.telegram.telegrambots.meta.api.objects.User;
 
 import static java.lang.String.format;
 import static java.time.ZonedDateTime.now;
-import static java.util.Optional.ofNullable;
 
 
 @Slf4j
@@ -87,11 +86,18 @@ public class SalaryBot implements LongPollingSingleThreadUpdateConsumer {
     }
 
     private UserDto extractUser(Update update) {
-        User user = ofNullable(update.getMessage().getFrom())
-                .orElseThrow(() -> new IllegalArgumentException("Не удалось извлечь пользователя из запроса"));
+        User user = getUser(update);
 
         return telegramService.find(user)
                 .orElseGet(() -> telegramService.registerUser(user));
+    }
+
+    private User getUser(Update update) {
+        if (update.getMessage() != null)
+            return update.getMessage().getFrom();
+        if (update.getCallbackQuery() != null)
+            return update.getCallbackQuery().getFrom();
+        throw new IllegalArgumentException("Не удалось извлечь пользователя из запроса");
     }
 
 }
