@@ -37,7 +37,6 @@ public enum ChatState {
     ADD_GOAL_SAVE_CHECK(new Button[]{ACCEPT, REJECT}),
     UPDATE_GOAL_CHOOSE_FIELD(MAIN_MENU_BUTTON),
     UPDATE_GOAL(null),
-    GET_GOAL(MAIN_MENU_BUTTON),
     DELETE_GOAL(MAIN_MENU_BUTTON),
 
     // Поступления

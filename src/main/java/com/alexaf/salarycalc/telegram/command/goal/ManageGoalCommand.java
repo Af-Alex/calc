@@ -3,6 +3,7 @@ package com.alexaf.salarycalc.telegram.command.goal;
 import com.alexaf.salarycalc.exception.MethodNotImplementedException;
 import com.alexaf.salarycalc.goal.GoalService;
 import com.alexaf.salarycalc.goal.GoalType;
+import com.alexaf.salarycalc.goal.dto.GoalDto;
 import com.alexaf.salarycalc.telegram.command.menu.MainMenuCommand;
 import com.alexaf.salarycalc.telegram.statics.Button;
 import com.alexaf.salarycalc.telegram.statics.ChatState;
@@ -15,6 +16,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 
 import static com.alexaf.salarycalc.telegram.statics.KeyboardFactory.getInlineButtonsRows;
 import static com.alexaf.salarycalc.telegram.statics.KeyboardFactory.getKeyboard;
+import static com.alexaf.salarycalc.telegram.statics.KeyboardFactory.mainMenuKeyboard;
 
 @Component
 public class ManageGoalCommand extends MainMenuCommand {
@@ -45,7 +47,7 @@ public class ManageGoalCommand extends MainMenuCommand {
                 case ADD -> processAddGoal(user);
                 case DELETE -> throw new MethodNotImplementedException("Удаление цели");
                 case UPDATE -> processUpdateGoal(user);
-                case GET -> throw new MethodNotImplementedException("Получение информации о цели");
+                case GET -> processGetGoal(user);
                 default -> unknownMessageReply(user);
             }
         } catch (IllegalArgumentException notButton) {
@@ -79,6 +81,28 @@ public class ManageGoalCommand extends MainMenuCommand {
         );
 
         reply(user.getTelegramId(), "Какую цель хочешь обновить?", inlineKeyboard, ChatState.UPDATE_GOAL_CHOOSE_FIELD);
+    }
+
+    private void processGetGoal(UserDto user) {
+        var goals = goalService.findActiveByUserIdSortByPriority(user.getId());
+
+        if (goals.isEmpty()) {
+            reply(user.getTelegramId(), "Цели ещё не добавлены. Используй кнопку \"Добавить\"", getKeyboard(getState(), true));
+            return;
+        }
+
+        var sb = new StringBuilder("Твои цели:\n");
+
+        int counter = 1;
+        for (GoalDto goal : goals) {
+            sb.append(counter++).append(")\n")
+                    .append("\t").append("Название: ").append(goal.getName()).append("\n")
+                    .append("\t").append("Тип: ").append(goal.getType().getText()).append("\n")
+                    .append("\t").append("Месячная сумма: ").append(goal.getMonthlyAmount()).append("\n")
+                    .append("\t").append("Приоритет: ").append(goal.getPriority()).append("\n");
+        }
+
+        reply(user.getTelegramId(), sb.toString(), mainMenuKeyboard(), ChatState.MAIN_MENU);
     }
 
 }
