@@ -6,6 +6,7 @@ import com.alexaf.salarycalc.telegram.statics.ChatState;
 import com.alexaf.salarycalc.user.UserDto;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.message.Message;
 
 import static com.alexaf.salarycalc.telegram.statics.ChatState.MAIN_MENU;
 import static com.alexaf.salarycalc.telegram.statics.ChatState.MANAGE_CONTRIBUTION;
@@ -13,6 +14,7 @@ import static com.alexaf.salarycalc.telegram.statics.ChatState.MANAGE_GOAL;
 import static com.alexaf.salarycalc.telegram.statics.ChatState.MANAGE_SALARY;
 import static com.alexaf.salarycalc.telegram.statics.KeyboardFactory.getKeyboard;
 import static com.alexaf.salarycalc.telegram.statics.KeyboardFactory.mainMenuKeyboard;
+import static java.util.Optional.ofNullable;
 
 @Component
 public class MainMenuCommand extends SendCommand {
@@ -52,6 +54,17 @@ public class MainMenuCommand extends SendCommand {
 
     protected void chooseButtonReply(UserDto user) {
         reply(user.getTelegramId(), "Не удалось прочитать значение. Выбери действие с помощью кнопок", getKeyboard(getState()));
+    }
+
+    protected void processMainMenuButton(Update update, UserDto user) {
+        ofNullable(update.getMessage()).map(Message::getText).ifPresent(text -> {
+            try {
+                if (Button.getByText(text) == Button.MAIN_MENU)
+                    forceUserToMainMenu(user);
+            } catch (IllegalArgumentException notButton) {
+                chooseButtonReply(user);
+            }
+        });
     }
 
 }

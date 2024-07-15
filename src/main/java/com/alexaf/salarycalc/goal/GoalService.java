@@ -14,7 +14,6 @@ import org.springframework.validation.annotation.Validated;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -28,10 +27,6 @@ public class GoalService {
     private final GoalMapper goalMapper;
     private final UserService userService;
 
-    public List<Goal> findAllByUserId(UUID userId) {
-        return goalRepository.findByUser_Id(userId);
-    }
-
     public List<GoalDto> findActiveByUserIdSortByPriority(UUID userId) {
         return goalRepository.findByActiveTrueAndUser_IdOrderByPriorityAsc(userId)
                 .stream()
@@ -39,12 +34,12 @@ public class GoalService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<Goal> findById(UUID id) {
-        return goalRepository.findById(id);
+    public Goal getEntityById(UUID id) {
+        return goalRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(Goal.class, id));
     }
 
-    public Goal getById(UUID id) {
-        return goalRepository.findById(id).orElseThrow(() -> new EntityNotFoundException(Goal.class, id));
+    public GoalDto getById(UUID id) {
+        return goalRepository.findById(id).map(goalMapper::toDto).orElseThrow(() -> new EntityNotFoundException(Goal.class, id));
     }
 
     public GoalDto create(@Valid GoalDto goalDto) {
@@ -69,7 +64,7 @@ public class GoalService {
     }
 
     public GoalDto update(GoalDto goalDto) {
-        var entity = getById(goalDto.getId());
+        var entity = getEntityById(goalDto.getId());
         goalMapper.partialUpdate(entity, goalDto);
 
         return goalMapper.toDto(goalRepository.save(entity));

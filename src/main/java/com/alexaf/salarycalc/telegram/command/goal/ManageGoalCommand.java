@@ -8,9 +8,12 @@ import com.alexaf.salarycalc.telegram.statics.Button;
 import com.alexaf.salarycalc.telegram.statics.ChatState;
 import com.alexaf.salarycalc.user.UserDto;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 
+import static com.alexaf.salarycalc.telegram.statics.KeyboardFactory.getInlineButtonsRows;
 import static com.alexaf.salarycalc.telegram.statics.KeyboardFactory.getKeyboard;
 
 @Component
@@ -41,7 +44,7 @@ public class ManageGoalCommand extends MainMenuCommand {
                 case MAIN_MENU -> forceUserToMainMenu(user);
                 case ADD -> processAddGoal(user);
                 case DELETE -> throw new MethodNotImplementedException("Удаление цели");
-                case UPDATE -> throw new MethodNotImplementedException("Обновление цели");
+                case UPDATE -> processUpdateGoal(user);
                 case GET -> throw new MethodNotImplementedException("Получение информации о цели");
                 default -> unknownMessageReply(user);
             }
@@ -59,6 +62,23 @@ public class ManageGoalCommand extends MainMenuCommand {
 
         reply(user.getTelegramId(), sb.toString(), getKeyboard(ChatState.ADD_GOAL_TYPE, true));
         updateUserChatState(user.getId(), ChatState.ADD_GOAL_TYPE);
+    }
+
+    private void processUpdateGoal(UserDto user) {
+        var goals = goalService.findActiveByUserIdSortByPriority(user.getId());
+
+        if (goals.isEmpty()) {
+            sender.send("У тебя нет целей, которые можно было бы обновить.", user);
+            return;
+        }
+
+        var inlineKeyboard = new InlineKeyboardMarkup(
+                getInlineButtonsRows(goals.stream()
+                        .map(goal -> Pair.of(goal.getName(), goal.getId().toString()))
+                        .toList())
+        );
+
+        reply(user.getTelegramId(), "Какую цель хочешь обновить?", inlineKeyboard, ChatState.UPDATE_GOAL_CHOOSE_FIELD);
     }
 
 }
