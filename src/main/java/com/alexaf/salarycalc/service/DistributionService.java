@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.MathContext;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static com.alexaf.salarycalc.utils.CalcUtils.percentOf;
+import static java.math.RoundingMode.HALF_DOWN;
 import static java.time.LocalDateTime.now;
 
 @Service
@@ -94,12 +95,19 @@ public class DistributionService {
     }
 
     private BigDecimal calculateFixedAmountWithoutDeadline(GoalDto goal, BigDecimal salary, BigDecimal income) {
-        BigDecimal percentFromSalary = percentOf(income, salary); // какой процент составляет income от текущей ЗП
-        return goal.getMonthlyAmount().multiply(percentFromSalary);
+        var result = goal.getMonthlyAmount().multiply(
+                percentOf(income, salary),
+                new MathContext(12, HALF_DOWN)
+        );
+        return result.setScale(2, HALF_DOWN);
     }
 
     private BigDecimal calculateMonthlyPercentageWithoutDeadline(GoalDto goal, BigDecimal income) {
-        return income.multiply(goal.getMonthlyAmount().divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP));
+        var result = income.multiply(
+                percentOf(goal.getMonthlyAmount(), new BigDecimal("100")),
+                new MathContext(12, HALF_DOWN)
+        );
+        return result.setScale(2, HALF_DOWN);
     }
 
 }
